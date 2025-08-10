@@ -1,3 +1,19 @@
+"""
+news_scraper.py
+
+Automated news scraper that:
+- Detects OS and Browser driver settings via config_driver.py
+- Uses Selenium with ChromeDriver or Chrome Headless Shell
+- Parses news entries from a given site URL based on selectors in config.py
+- Filters news items by inclusion/exclusion keywords
+- Follows valid links to extract details (images, file info, download links)
+- Outputs results to a timestamped CSV file
+
+Requires:
+    config.py         - Constants for HTML selectors, strings, and providers
+    config_driver.py  - Logic to detect OS/arch, chromedriver paths, and headless options
+"""
+
 import time
 import threading
 import csv
@@ -11,21 +27,65 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import config
 import config_driver
+import os
 
 
 def create_driver(chromedriver_path):
-    options = Options()
-    if "headless" in chromedriver_path:
-        options.add_argument("--headless=new")
+    """
+    Create and configure a Selenium Chrome WebDriver instance.
 
-    service = Service(chromedriver_path)
-    return webdriver.Chrome(service=service, options=options)
+    Detects if the path points to a Chrome Headless Shell binary
+    and sets up `options.binary_location` accordingly. Otherwise,
+    treats the supplied path as a ChromeDriver executable and
+    applies headless mode if indicated by the filename.
+
+    Args:
+        chromedriver_path (str): Path to ChromeDriver or Chrome Headless Shell binary.
+
+    Returns:
+        webdriver.Chrome: A configured Chrome WebDriver ready to use.
+    """
+    options = Options()
+
+    if "chrome-headless-shell" in chromedriver_path:
+        os_arch = config_driver.detect_os_arch()
+        standard_driver_path = config_driver.build_chromedriver_path(os_arch, headless=False)
+
+        options.binary_location = os.path.abspath(chromedriver_path)
+
+        service = Service(standard_driver_path)
+        return webdriver.Chrome(service=service, options=options)
+    else:
+        if "headless" in chromedriver_path.lower():
+            options.add_argument("--headless=new")
+
+        service = Service(chromedriver_path)
+        return webdriver.Chrome(service=service, options=options)
 
 
 def main():
+    """
+    Main entry point for the news scraper.
+
+    Steps:
+        1. Prompt for target site URL and get ChromeDriver path from config_driver.
+        2. Launch a browser instance and load the main page.
+        3. Wait for and parse the main content section.
+        4. Loop through news entries matching config.py selectors.
+        5. Apply filters: include keyword must be present, exclude keyword absent.
+        6. For each valid news link, fetch detail page and extract:
+            - Image1 (first image section)
+            - Image2 (recipepod image section)
+            - Filename and file size
+            - Download links for configured providers
+        7. Save results to a CSV file with timestamp in filename.
+
+    Output:
+        A `news_output_<DD.MM.YYYY>_<HH.MM.SS>.csv` file in the Outputs directory.
+    """
     now = datetime.now()
     formatted_dt = now.strftime("%d.%m.%Y_%H.%M.%S")
-    output_file = f"news_output_{formatted_dt}.csv"
+    output_file = os.path.join("Outputs", f"news_output_{formatted_dt}.csv")
     
     site = input("Enter site URL to scrape: ").strip()
     chromedriver_path = f"./{config_driver.chromedriver_path}"
@@ -35,16 +95,15 @@ def main():
     driver.get(site)
 
     # Wait for main content
-    # try:
-    #     WebDriverWait(driver, 60).until(
-    #         EC.presence_of_element_located((By.CLASS_NAME, config.PARENT_DIV_CLASS))
-    #     )
-    # except Exception as e:
-    #     print(f"Failed to load main content: {e}")
-    #     driver.quit()
-    #     return
+    try:
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.CLASS_NAME, config.PARENT_DIV_CLASS))
+        )
+    except Exception as e:
+        print(f"Failed to load main content: {e}")
+        driver.quit()
+        return
 
-    # Parse main page
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
@@ -63,18 +122,14 @@ def main():
         print("Can't find news list section.")
         return
 
-    # CSV setup
+    fieldnames = ["date", "title", "href", "image1", "image2", "filename", "size", "fileurl"]
+
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = [
-            "date", "title", "href",
-            "image1", "image2",
-            "filename", "size", "fileurl"
-        ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-    # Loop through news items
     detail_driver = create_driver(chromedriver_path)
+
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
@@ -82,41 +137,33 @@ def main():
         date_span = li.find("span", class_=config.NEWS_DATE_CLASS)
         date = date_span.get_text(strip=True).replace("/", ".") if date_span else ""
 
-        # Filter titles
         if config.TITLE_FILTER_INCLUDE not in title:
             continue
         if config.TITLE_FILTER_EXCLUDE in title:
             continue
 
-        # Open detail page for each valid href
         detail_driver.get(href)
-        # try:
-        #     WebDriverWait(detail_driver, 10).until(
-        #         EC.presence_of_element_located((By.CLASS_NAME, config.DETAIL_NEWS_DIV_CLASS))
-        #     )
-        # except Exception:
-        #     print(f"Timeout loading detail page: {href}")
-        #     detail_driver.quit()
-        #     detail_driver = create_driver(chromedriver_path)
-        #     continue
+        try:
+            WebDriverWait(detail_driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, config.DETAIL_NEWS_DIV_CLASS))
+            )
+        except Exception:
+            print(f"Timeout loading detail page: {href}")
+            continue
 
         detail_soup = BeautifulSoup(detail_driver.page_source, "html.parser")
-
         news_div = detail_soup.find("div", class_=config.DETAIL_NEWS_DIV_CLASS)
         if not news_div:
             continue
 
-        # Extract Image1
         img1_tag = news_div.find("div", class_=config.DETAIL_IMAGE1_DIV_CLASS)
         image1 = img1_tag.find(config.DETAIL_IMAGE1_IMG_TAG)["src"] if img1_tag and img1_tag.find(config.DETAIL_IMAGE1_IMG_TAG) else ""
 
-        # Extract Image2
         img2_div = news_div.find("div", class_=config.DETAIL_IMAGE2_DIV_CLASS)
         image2 = ""
         if img2_div and img2_div.find("img"):
             image2 = img2_div.find("img").get("src", "")
 
-        # Extract filename & size
         filename, size = "", ""
         for txt in news_div.stripped_strings:
             if txt.startswith(config.FILE_SIZE_PREFIX):
@@ -125,39 +172,31 @@ def main():
                     filename = parts[0].strip()
                     size = parts[1].strip()
 
-        # Extract file URLs by providers
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
             file_list = []
             for a in news_div.find_all("a", href=True):
                 if p in a["href"]:
                     file_list.append(a["href"])
-
             fileurl_dict[p] = file_list
 
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
 
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            while True:
-                try:
-                    writer.writerow({
-                        "date": date,
-                        "title": title,
-                        "href": href,
-                        "image1": image1,
-                        "image2": image2,
-                        "filename": filename,
-                        "size": size,
-                        "fileurl": fileurl
-                    })
-                except Exception as e:
-                    print(f"Error writing row for title '{title}': {e}")
-                    time.sleep(10)
-                else:
-                    break
+            writer.writerow({
+                "date": date,
+                "title": title,
+                "href": href,
+                "image1": image1,
+                "image2": image2,
+                "filename": filename,
+                "size": size,
+                "fileurl": fileurl
+            })
 
-    print("Scraping completed. Data saved to output.csv.")
+    detail_driver.quit()
+    print(f"Scraping completed. Data saved to {output_file}")
 
 
 if __name__ == "__main__":
