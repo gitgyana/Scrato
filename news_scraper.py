@@ -1,7 +1,7 @@
 import time
-import datetime
 import threading
 import csv
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -10,28 +10,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import config
-
-
-def ask_headless(timeout=10):
-    """
-    10-second timer for headless mode choice
-    """
-    result = {"headless": False}
-
-    def get_input():
-        val = input("Would you like to run in headless mode? (y/N, default N): ")
-        result["headless"] = val.strip().lower() == "y"
-
-    thread = threading.Thread(target=get_input)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
-    return result["headless"]
+import config_driver
 
 
 def create_driver(chromedriver_path, headless=False):
     options = Options()
-    if headless:
+    if "headless" in chromedriver_path:
         options.add_argument("--headless=new")
 
     service = Service(chromedriver_path)
@@ -42,11 +26,11 @@ def main():
     now = datetime.now()
     formatted_dt = now.strftime("%d.%m.%Y_%H.%M.%S")
     output_file = f"news_output_{formatted_dt}.csv"
-
+    
     site = input("Enter site URL to scrape: ").strip()
     print("You have 10 seconds to choose headless mode...")
     headless = ask_headless(10)
-    chromedriver_path = "./chromedriver-win64/chromedriver.exe"
+    chromedriver_path = f"./{config_driver.chromedriver_path}"
 
     # Main browser
     driver = create_driver(chromedriver_path, headless)
