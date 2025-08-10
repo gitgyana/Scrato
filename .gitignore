@@ -1,4 +1,5 @@
 __pycache__
 config.py
 news_output*
-chromedrivers"chromedrivers/" 
+chromedrivers
+chromedrivers/
