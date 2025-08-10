@@ -1,7 +1,6 @@
 # News Scraper
 
-Automated news scraper using Selenium and BeautifulSoup to extract structured news content and downloadable file links from specified websites.  
-The scraper is cross-platform and automatically detects your operating system and processor architecture to use the correct ChromeDriver or Chrome Headless Shell.
+Automated news scraper using Selenium and BeautifulSoup to extract structured news content and downloadable file links from specified websites. The scraper is cross-platform and automatically detects your operating system and processor architecture to use the correct ChromeDriver or Chrome Headless Shell.
 
 ***
 
@@ -27,7 +26,7 @@ The scraper is cross-platform and automatically detects your operating system an
 
 - **Automatic OS & architecture detection:** Uses the correct ChromeDriver for OS/arch
 - **Headless mode prompt:** User-selectable within 10 seconds or defaults to normal mode
-- **Robust scraping:** Filters news items according to custom keywords (`[KBJ]` must be present, `FC2` excluded)
+- **Robust scraping:** Filters news items according to custom keywords (`[NEW]` must be present, `AD` excluded)
 - **Detail page scraping:** Follows each valid link, extracting two images and file download links for certain providers
 - **Configurable selectors & providers:** Easily adjust targets via `config.py`
 - **CSV output:** Saves results to a timestamped CSV file in the `Outputs` directory
@@ -42,12 +41,6 @@ The scraper is cross-platform and automatically detects your operating system an
 
     ```
     pip install -r requirements.txt
-    ```
-
-    Contents of `requirements.txt`:
-    ```
-    selenium
-    beautifulsoup4
     ```
 
 4. **Download the correct ChromeDriver(s):**
@@ -98,7 +91,7 @@ python news_scraper.py
 - `image2` – Second image URL (from Recipepod div)
 - `filename` – Parsed filename from file size line
 - `size` – Parsed file size
-- `fileurl` – Semicolon-separated download links for providers (rapidgator, k2s, subyshare, mexa)
+- `fileurl` – Semicolon-separated download links for providers
 
 ***
 
