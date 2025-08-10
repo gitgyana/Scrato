@@ -16,9 +16,14 @@ def detect_os_arch():
     else:
         return None
 
-def build_chromedriver_path(os_arch):
+def build_chromedriver_path(os_arch, headless=False):
     filename = 'chromedriver.exe' if 'win' in os_arch else 'chromedriver'
-    return os.path.join('chromedrivers', f'chromedriver-{os_arch}', filename)
+    driver_name = f'chromedriver-{os_arch}'
+    if headless:
+        filename = "chrome-headless-shell.exe" if 'win' in os_arch else 'chrome-headless-shell'
+        driver_name = f'chrome-headless-shell-{os_arch}'
+
+    return os.path.join('chromedrivers', driver_name, filename)
 
 def ask_headless(timeout=10):
     """
@@ -41,8 +46,8 @@ def ask_headless(timeout=10):
 os_arch = detect_os_arch()
 print(f"OS: {os_arch}")
 time.sleep(2)
-chromedriver_path = build_chromedriver_path(os_arch) if os_arch else None
 headless = ask_headless()
+chromedriver_path = build_chromedriver_path(os_arch, headless) if os_arch else None
 time.sleep(1.5)
 print(f"Chrome Driver: {chromedriver_path}")
 time.sleep(2)

@@ -13,7 +13,7 @@ import config
 import config_driver
 
 
-def create_driver(chromedriver_path, headless=False):
+def create_driver(chromedriver_path):
     options = Options()
     if "headless" in chromedriver_path:
         options.add_argument("--headless=new")
@@ -28,23 +28,21 @@ def main():
     output_file = f"news_output_{formatted_dt}.csv"
     
     site = input("Enter site URL to scrape: ").strip()
-    print("You have 10 seconds to choose headless mode...")
-    headless = ask_headless(10)
     chromedriver_path = f"./{config_driver.chromedriver_path}"
 
     # Main browser
-    driver = create_driver(chromedriver_path, headless)
+    driver = create_driver(chromedriver_path)
     driver.get(site)
 
     # Wait for main content
-    try:
-        WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located((By.CLASS_NAME, config.PARENT_DIV_CLASS))
-        )
-    except Exception as e:
-        print(f"Failed to load main content: {e}")
-        driver.quit()
-        return
+    # try:
+    #     WebDriverWait(driver, 60).until(
+    #         EC.presence_of_element_located((By.CLASS_NAME, config.PARENT_DIV_CLASS))
+    #     )
+    # except Exception as e:
+    #     print(f"Failed to load main content: {e}")
+    #     driver.quit()
+    #     return
 
     # Parse main page
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -76,7 +74,7 @@ def main():
         writer.writeheader()
 
     # Loop through news items
-    detail_driver = create_driver(chromedriver_path, headless)
+    detail_driver = create_driver(chromedriver_path)
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
@@ -92,15 +90,15 @@ def main():
 
         # Open detail page for each valid href
         detail_driver.get(href)
-        try:
-            WebDriverWait(detail_driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, config.DETAIL_NEWS_DIV_CLASS))
-            )
-        except Exception:
-            print(f"Timeout loading detail page: {href}")
-            detail_driver.quit()
-            detail_driver = create_driver(chromedriver_path, headless)
-            continue
+        # try:
+        #     WebDriverWait(detail_driver, 10).until(
+        #         EC.presence_of_element_located((By.CLASS_NAME, config.DETAIL_NEWS_DIV_CLASS))
+        #     )
+        # except Exception:
+        #     print(f"Timeout loading detail page: {href}")
+        #     detail_driver.quit()
+        #     detail_driver = create_driver(chromedriver_path)
+        #     continue
 
         detail_soup = BeautifulSoup(detail_driver.page_source, "html.parser")
 
