@@ -86,6 +86,7 @@ def main():
     now = datetime.now()
     formatted_ym = now.strftime("%Y.%m")
     formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
+    os.makedirs(os.path.join("Outputs", formatted_ym), exist_ok=True)
     output_file = os.path.join("Outputs", formatted_ym, f"news_output_{formatted_dt}.csv")
     
     site = input("Enter site URL to scrape: ").strip()
