@@ -195,6 +195,8 @@ def main():
                 "fileurl": fileurl
             })
 
+        print(f"Completed: {date}: {title}")
+
     detail_driver.quit()
     print(f"Scraping completed. Data saved to {output_file}")
 
