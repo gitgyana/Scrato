@@ -28,12 +28,12 @@ def build_chromedriver_path(os_arch, headless=False):
 def ask_headless(timeout=10):
     """
     Prompt the user whether to run in headless mode, with a timeout.
-    Defaults to False (non-headless).
+    Defaults to True (headless).
     """
-    result = {"headless": False}
+    result = {"headless": True}
 
     def get_input():
-        val = input("Would you like to run in headless mode? (y/N, default N): ")
+        val = input("Would you like to run in headless mode? (y/N, default y): ")
         result["headless"] = val.strip().lower() == "y"
 
     thread = threading.Thread(target=get_input)
