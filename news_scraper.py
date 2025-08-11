@@ -135,6 +135,11 @@ def browser(site=None):
         href = title_tag[config.TITLE_A_HREF_ATTR].strip() if title_tag else ""
         date_span = li.find("span", class_=config.NEWS_DATE_CLASS)
         date = date_span.get_text(strip=True).replace("/", ".") if date_span else ""
+        if date:
+            try:
+                date = datetime.strptime(date, "%d.%m.%Y").strftime("%Y.%m.%d")
+            except ValueError:
+                pass
 
         if config.TITLE_FILTER_INCLUDE not in title:
             continue
