@@ -63,7 +63,7 @@ def create_driver(chromedriver_path):
         return webdriver.Chrome(service=service, options=options)
 
 
-def main():
+def browser(site=None):
     """
     Main entry point for the news scraper.
 
@@ -85,11 +85,17 @@ def main():
     """
     now = datetime.now()
     formatted_ym = now.strftime("%Y.%m")
-    formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
+    
+    formatted_dt = config.OUTPUT_DATETIME
+    if not formatted_dt:
+        formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
+
     os.makedirs(os.path.join("Outputs", formatted_ym), exist_ok=True)
     output_file = os.path.join("Outputs", formatted_ym, f"news_output_{formatted_dt}.csv")
     
-    site = input("Enter site URL to scrape: ").strip()
+    if not site:
+        site = input("Enter site URL to scrape: ").strip()
+
     chromedriver_path = f"./{driver_config.chromedriver_path}"
 
     # Main browser
@@ -187,4 +193,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for i in range(1, 3000):
+        browser(config.WEBSITE.replace("| PAGENO |", str(i)))
