@@ -118,6 +118,8 @@ FILE_SIZE_PREFIX = "File size:"
 FILE_PROVIDERS = ["source1", "source2", "source3", "source4"]
 TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
+WEBSITE = "https://example.com/news-page-| PAGENO |-.html#gsc.tab=0"
+OUTPUT_DATETIME = "2025.08.12_01.12.07_00"
 ```
 
 ### `driver_config.py`
