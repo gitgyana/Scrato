@@ -96,16 +96,6 @@ def main():
     driver = create_driver(chromedriver_path)
     driver.get(site)
 
-    # Wait for main content
-    try:
-        WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located((By.CLASS_NAME, config.PARENT_DIV_CLASS))
-        )
-    except Exception as e:
-        print(f"Failed to load main content: {e}")
-        driver.quit()
-        return
-
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
@@ -145,14 +135,7 @@ def main():
             continue
 
         detail_driver.get(href)
-        try:
-            WebDriverWait(detail_driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, config.DETAIL_NEWS_DIV_CLASS))
-            )
-        except Exception:
-            print(f"Timeout loading detail page: {href}")
-            continue
-
+        
         detail_soup = BeautifulSoup(detail_driver.page_source, "html.parser")
         news_div = detail_soup.find("div", class_=config.DETAIL_NEWS_DIV_CLASS)
         if not news_div:
@@ -197,7 +180,7 @@ def main():
                 "fileurl": fileurl
             })
 
-        print(f"Completed: {date}: {title}")
+        print(f"Completed: {date}: {filename}")
 
     detail_driver.quit()
     print(f"Scraping completed. Data saved to {output_file}")
