@@ -15,8 +15,9 @@ Requires:
 """
 
 import time
-import threading
 import csv
+import os
+import threading
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -27,7 +28,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import config
 import driver_config
-import os
 
 
 def create_driver(chromedriver_path):
@@ -180,7 +180,7 @@ def main():
                 "fileurl": fileurl
             })
 
-        print(f"Completed: {date}: {filename}")
+            print(f"Completed: {date}: {filename}")
 
     detail_driver.quit()
     print(f"Scraping completed. Data saved to {output_file}")
