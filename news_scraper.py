@@ -2,7 +2,7 @@
 news_scraper.py
 
 Automated news scraper that:
-- Detects OS and Browser driver settings via config_driver.py
+- Detects OS and Browser driver settings via driver_config.py
 - Uses Selenium with ChromeDriver or Chrome Headless Shell
 - Parses news entries from a given site URL based on selectors in config.py
 - Filters news items by inclusion/exclusion keywords
@@ -11,7 +11,7 @@ Automated news scraper that:
 
 Requires:
     config.py         - Constants for HTML selectors, strings, and providers
-    config_driver.py  - Logic to detect OS/arch, chromedriver paths, and headless options
+    driver_config.py  - Logic to detect OS/arch, chromedriver paths, and headless options
 """
 
 import time
@@ -26,7 +26,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import config
-import config_driver
+import driver_config
 import os
 
 
@@ -48,8 +48,8 @@ def create_driver(chromedriver_path):
     options = Options()
 
     if "chrome-headless-shell" in chromedriver_path:
-        os_arch = config_driver.detect_os_arch()
-        standard_driver_path = config_driver.build_chromedriver_path(os_arch, headless=False)
+        os_arch = driver_config.detect_os_arch()
+        standard_driver_path = driver_config.build_chromedriver_path(os_arch, headless=False)
 
         options.binary_location = os.path.abspath(chromedriver_path)
 
@@ -68,7 +68,7 @@ def main():
     Main entry point for the news scraper.
 
     Steps:
-        1. Prompt for target site URL and get ChromeDriver path from config_driver.
+        1. Prompt for target site URL and get ChromeDriver path from driver_config.
         2. Launch a browser instance and load the main page.
         3. Wait for and parse the main content section.
         4. Loop through news entries matching config.py selectors.
@@ -89,7 +89,7 @@ def main():
     output_file = os.path.join("Outputs", formatted_ym, f"news_output_{formatted_dt}.csv")
     
     site = input("Enter site URL to scrape: ").strip()
-    chromedriver_path = f"./{config_driver.chromedriver_path}"
+    chromedriver_path = f"./{driver_config.chromedriver_path}"
 
     # Main browser
     driver = create_driver(chromedriver_path)
