@@ -84,8 +84,9 @@ def main():
         A `news_output_<DD.MM.YYYY>_<HH.MM.SS>.csv` file in the Outputs directory.
     """
     now = datetime.now()
-    formatted_dt = now.strftime("%d.%m.%Y_%H.%M.%S")
-    output_file = os.path.join("Outputs", f"news_output_{formatted_dt}.csv")
+    formatted_ym = now.strftime("%Y.%m")
+    formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
+    output_file = os.path.join("Outputs", formatted_ym, f"news_output_{formatted_dt}.csv")
     
     site = input("Enter site URL to scrape: ").strip()
     chromedriver_path = f"./{config_driver.chromedriver_path}"
