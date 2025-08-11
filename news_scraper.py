@@ -122,9 +122,10 @@ def browser(site=None):
 
     fieldnames = ["date", "title", "href", "image1", "image2", "filename", "size", "fileurl"]
 
-    with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
+    if not os.path.isfile(output_file):
+        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
     detail_driver = create_driver(chromedriver_path)
 
