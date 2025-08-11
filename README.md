@@ -15,7 +15,7 @@ Automated news scraper using Selenium and BeautifulSoup to extract structured ne
   - [Output columns](#output-columns)
 - [Configuration Reference](#configuration-reference)
   - [config.py](#configpy)
-  - [config_driver.py](#config_driverpy)
+  - [driver_config.py](#driver_configpy)
 - [Advanced](#advanced)
 - [Troubleshooting](#troubleshooting)
 - [File Structure](#file-structure)
@@ -120,7 +120,7 @@ TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
 ```
 
-### `config_driver.py`
+### `driver_config.py`
 
 Handles automatic OS/platform detection and ChromeDriver/headless shell selection.
 You can override the detection or structure as needed for your environment.
@@ -149,7 +149,7 @@ You can override the detection or structure as needed for your environment.
 │
 ├── news_scraper.py        # Main scraping script
 ├── config.py              # Site selectors & rules
-├── config_driver.py       # OS/platform/driver detection logic
+├── driver_config.py       # OS/platform/driver detection logic
 ├── requirements.txt
 ├── .gitignore
 │
