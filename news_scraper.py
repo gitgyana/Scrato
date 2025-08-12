@@ -131,8 +131,8 @@ def browser(site=None):
     detail_driver = create_driver(chromedriver_path)
 
     conn = sqlite3.connect(config.DATABASE)
-    db_pointer = conn.cursor()
-    
+    cursor = conn.cursor()
+
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
@@ -172,6 +172,16 @@ def browser(site=None):
                 if len(parts) >= 2:
                     filename = parts[0].strip()
                     size = parts[1].strip()
+        
+        cursor.execute(
+            f"SELECT 1 FROM {config.TABLE} WHERE date = ? AND filename = ?",
+            (date, filename)
+        ) 
+
+        result = cursor.fetchone()
+        if result:
+            print("Composite key exists.")
+            continue
 
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
