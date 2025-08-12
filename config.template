@@ -1,0 +1,34 @@
+# Template for config.py
+
+# CSS classes and element identifiers
+PARENT_DIV_CLASS = "category_news_phai_chinh"
+NEWS_LIST_DIV_CLASS = "category_news"
+NEWS_LIST_UL_TAG = "ul"
+
+NEWS_ITEM_LI_TAG = "li"
+TITLE_A_TAG = "a"
+TITLE_A_TITLE_ATTR = "title"
+TITLE_A_HREF_ATTR = "href"
+NEWS_DATE_CLASS = "news_date"
+
+# Classes in detail page
+DETAIL_NEWS_DIV_CLASS = "news"
+DETAIL_IMAGE1_DIV_CLASS = "fisrst_sc"
+DETAIL_IMAGE1_IMG_TAG = "img"
+DETAIL_IMAGE2_DIV_CLASS = "Recipepod"
+
+# File size prefix in text
+FILE_SIZE_PREFIX = "File size:"
+
+# Providers for filtering file links
+FILE_PROVIDERS = ["source1", "source2", "source3", "source4"]
+
+# Title filtering strings
+TITLE_FILTER_INCLUDE = "[NEW]"
+TITLE_FILTER_EXCLUDE = "AD"
+
+WEBSITE = "https://example.com/news-page-| PAGENO |.html#gsc.tab=0"
+OUTPUT_DATETIME = "2025.08.12_01.12.34"
+
+DATABASE = 'database.db'
+TABLE = 'table_0'
