@@ -18,6 +18,7 @@ import time
 import csv
 import os
 import threading
+import sqlite3
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -129,6 +130,9 @@ def browser(site=None):
 
     detail_driver = create_driver(chromedriver_path)
 
+    conn = sqlite3.connect(config.DATABASE)
+    db_pointer = conn.cursor()
+    
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
