@@ -33,8 +33,8 @@ def ask_headless(timeout=10):
     result = {"headless": True}
 
     def get_input():
-        val = input("Would you like to run in headless mode? (y/N, default y): ")
-        result["headless"] = val.strip().lower() == "y"
+        val = input("Would you like to run in headless mode? (y/N, default y): ").strip().lower()
+        result["headless"] = val in ["y", '']
 
     thread = threading.Thread(target=get_input)
     thread.daemon = True
