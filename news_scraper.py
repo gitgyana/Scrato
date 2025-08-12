@@ -30,6 +30,8 @@ from bs4 import BeautifulSoup
 import config
 import driver_config
 
+existing_records = 0
+successful_records = 0
 
 def create_driver(chromedriver_path):
     """
@@ -84,6 +86,10 @@ def browser(site=None):
     Output:
         A `news_output_<DD.MM.YYYY>_<HH.MM.SS>.csv` file in the Outputs directory.
     """
+
+    global existing_records
+    global successful_records
+
     now = datetime.now()
     formatted_ym = now.strftime("%Y.%m")
     
@@ -134,6 +140,11 @@ def browser(site=None):
     cursor = conn.cursor()
 
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
+        if existing_records == 10:
+            print("Exceeded 10 continuous old records.")
+            existing_records = 0
+            return None
+
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
         href = title_tag[config.TITLE_A_HREF_ATTR].strip() if title_tag else ""
@@ -180,7 +191,8 @@ def browser(site=None):
 
         result = cursor.fetchone()
         if result:
-            print("Composite key exists.")
+            print("Composite key exists. Skipping DB insert.")
+            existing_records += 1
             continue
 
         fileurl_dict = {}
@@ -192,6 +204,17 @@ def browser(site=None):
             fileurl_dict[p] = file_list
 
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
+
+        cursor.execute(
+            f"""
+            INSERT OR IGNORE INTO {config.TABLE} 
+            (date, title, href, image1, image2, filename, size, fileurl) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (date, title, href, image1, image2, filename, size, fileurl)
+        )
+
+        conn.commit()
 
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -208,10 +231,22 @@ def browser(site=None):
 
             print(f"Completed: {date}: {filename}")
 
+        successful_records += 1
+
+    conn.commit()
+    conn.close()
     detail_driver.quit()
-    print(f"Scraping completed. Data saved to {output_file}")
+    if successful_records == 0:
+        print("ZERO SUCCESSFUL RECORDS FOUND")
+    else:
+        print(f"Scraping completed. Data saved to {output_file}")
 
 
 if __name__ == "__main__":
-    for i in range(1, 3000):
-        browser(config.WEBSITE.replace("| PAGENO |", str(i)))
+    page_no = 1
+    while True:
+        status = browser(config.WEBSITE.replace("| PAGENO |", str(page_no)))
+        page_no += 1
+        if not status:
+            page_no = 1
+
