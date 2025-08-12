@@ -5,3 +5,4 @@ Outputs/
 news_output*
 chromedrivers
 chromedrivers/
+*.db
