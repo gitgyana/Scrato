@@ -142,8 +142,7 @@ def browser(site=None):
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records == 10:
             print("Exceeded 10 continuous old records.")
-            existing_records = 0
-            return None
+            return
 
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
@@ -240,6 +239,7 @@ def browser(site=None):
         print("ZERO SUCCESSFUL RECORDS FOUND")
     else:
         print(f"Scraping completed. Data saved to {output_file}")
+        successful_records = 0
 
 
 if __name__ == "__main__":
@@ -247,6 +247,7 @@ if __name__ == "__main__":
     while True:
         status = browser(config.WEBSITE.replace("| PAGENO |", str(page_no)))
         page_no += 1
-        if not status:
+        if existing_records == 10:
             page_no = 1
+            existing_records = 1
 
