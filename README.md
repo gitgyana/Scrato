@@ -73,7 +73,7 @@ python news_scraper.py
 - On launch, the tool prints your OS, asks if you want headless mode, and validates a ChromeDriver binary is present.
 
 - You will be prompted:
-    1. **"Would you like to run in headless mode? (y/N, default N):"**  
+    1. **"Would you like to run in headless mode? (y/N, default y):"**  
     2. **"Enter site URL to scrape:"**  
 
 - The scraper navigates and extracts all matching news entries, following links to detail pages.
@@ -118,8 +118,10 @@ FILE_SIZE_PREFIX = "File size:"
 FILE_PROVIDERS = ["source1", "source2", "source3", "source4"]
 TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
-WEBSITE = "https://example.com/news-page-| PAGENO |-.html#gsc.tab=0"
+WEBSITE = "https://example.com/news-page-| PAGENO |.html#gsc.tab=0"
 OUTPUT_DATETIME = "2025.08.12_01.12.07_00"
+DATABASE = 'database.db'
+TABLE = 'table_0'
 ```
 
 ### `driver_config.py`
@@ -152,7 +154,8 @@ You can override the detection or structure as needed for your environment.
 ├── news_scraper.py        # Main scraping script
 ├── config.py              # Site selectors & rules
 ├── driver_config.py       # OS/platform/driver detection logic
-├── requirements.txt
+├── config.template        # Template for config.py
+├── requirements.txt       # Python packages to be installed
 ├── .gitignore
 │
 ├── chromedrivers/         # ChromeDriver binaries per architecture
