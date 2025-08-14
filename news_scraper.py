@@ -50,6 +50,12 @@ def create_driver(chromedriver_path):
     """
     options = Options()
     
+    if driver_config.disable_js:
+        prefs = {
+            "profile.managed_default_content_settings.javascript": 2
+        }
+        options.add_experimental_option("prefs", prefs)
+
     if "chrome-headless-shell" in chromedriver_path:
         os_arch = driver_config.detect_os_arch()
         standard_driver_path = driver_config.build_chromedriver_path(os_arch, headless=False)
@@ -57,16 +63,13 @@ def create_driver(chromedriver_path):
         options.binary_location = os.path.abspath(chromedriver_path)
 
         service = Service(standard_driver_path)
-        return webdriver.Chrome(service=service, options=options)
     else:
         if "headless" in chromedriver_path.lower():
             options.add_argument("--headless=new")
 
         service = Service(chromedriver_path)
-        return webdriver.Chrome(service=service, options=options)
     
-    if disable_js:
-        driver_config.disable_javascript(options)
+    return webdriver.Chrome(service=service, options=options)
 
 
 def browser(site=None):
