@@ -34,64 +34,79 @@ existing_records = 0
 successful_records = 0
 current_pdate = None
 
-def create_driver(chromedriver_path):
+
+def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
     """
-    Create and configure a Selenium Chrome WebDriver instance.
+    Create and configure a Chrome WebDriver instance.
 
-    Detects if the path points to a Chrome Headless Shell binary
-    and sets up `options.binary_location` accordingly. Otherwise,
-    treats the supplied path as a ChromeDriver executable and
-    applies headless mode if indicated by the filename.
-
-    Args:
-        chromedriver_path (str): Path to ChromeDriver or Chrome Headless Shell binary.
+    This function sets up a Selenium Chrome WebDriver with options and preferences
+    defined by the given driver_config object. It allows enabling or disabling 
+    site permissions, JavaScript, and headless mode based on the provided ChromeDriver path.
+    
+    Parameters:
+        chromedriver_path (str): The file system path to the ChromeDriver executable.
+        driver_config: An object containing configuration flags and helper methods
+                       such as disable_site_permissions, disable_js, detect_os_arch,
+                       and build_chromedriver_path.
 
     Returns:
-        webdriver.Chrome: A configured Chrome WebDriver ready to use.
+        webdriver.Chrome: A configured Chrome WebDriver instance ready for automation.
     """
     options = Options()
-    
+    prefs = {}
+
+    if driver_config.disable_site_permissions:
+        options.add_argument("--disable-infobars")
+        options.add_argument("--disable-notifications")
+        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+
+        prefs.update({
+            "profile.default_content_setting_values.geolocation": 2,
+            "profile.default_content_setting_values.notifications": 2,
+            "profile.default_content_setting_values.media_stream_mic": 2,
+            "profile.default_content_setting_values.media_stream_camera": 2,
+        })
+
     if driver_config.disable_js:
-        prefs = {
-            "profile.managed_default_content_settings.javascript": 2
-        }
+        prefs["profile.managed_default_content_settings.javascript"] = 2
+
+    if prefs:
         options.add_experimental_option("prefs", prefs)
 
     if "chrome-headless-shell" in chromedriver_path:
         os_arch = driver_config.detect_os_arch()
         standard_driver_path = driver_config.build_chromedriver_path(os_arch, headless=False)
-
         options.binary_location = os.path.abspath(chromedriver_path)
-
         service = Service(standard_driver_path)
     else:
         if "headless" in chromedriver_path.lower():
             options.add_argument("--headless=new")
-
         service = Service(chromedriver_path)
-    
+
     return webdriver.Chrome(service=service, options=options)
 
 
 def browser(site=None):
     """
-    Main entry point for the news scraper.
+    Scrape news articles from a website and save results to CSV and SQLite database.
 
-    Steps:
-        1. Prompt for target site URL and get ChromeDriver path from driver_config.
-        2. Launch a browser instance and load the main page.
-        3. Wait for and parse the main content section.
-        4. Loop through news entries matching config.py selectors.
-        5. Apply filters: include keyword must be present, exclude keyword absent.
-        6. For each valid news link, fetch detail page and extract:
-            - Image1 (first image section)
-            - Image2 (recipepod image section)
-            - Filename and file size
-            - Download links for configured providers
-        7. Save results to a CSV file with timestamp in filename.
+    If no site URL is provided, prompts the user to input one. Uses Selenium to
+    load pages and BeautifulSoup to parse HTML content. Extracted news data is
+    filtered, saved, and managed to avoid duplicate entries.
 
-    Output:
-        A `news_output_<DD.MM.YYYY>_<HH.MM.SS>.csv` file in the Outputs directory.
+    Parameters:
+        site (str, optional): The URL of the site to scrape. If None, prompts the user to input a URL.
+
+    Returns:
+        None
+
+    Side effects:
+        - Creates output directories and files under "Outputs".
+        - Writes news data to a CSV file.
+        - Inserts records into a SQLite database.
+        - Prints status and error messages to stdout.
     """
 
     global existing_records
@@ -114,7 +129,7 @@ def browser(site=None):
     chromedriver_path = f"./{driver_config.chromedriver_path}"
 
     # Main browser
-    driver = create_driver(chromedriver_path)
+    driver = create_driver(chromedriver_path, driver_config)
     driver.get(site)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -140,7 +155,7 @@ def browser(site=None):
             writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
             writer.writeheader()
 
-    detail_driver = create_driver(chromedriver_path)
+    detail_driver = create_driver(chromedriver_path, driver_config)
 
     conn = sqlite3.connect(config.DATABASE)
     cursor = conn.cursor()
@@ -153,7 +168,7 @@ def browser(site=None):
     )
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
-        if existing_records == 50:
+        if existing_records > 50:
             print("Exceeded 50 continuous old records.")
             break
 
