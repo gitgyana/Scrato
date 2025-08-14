@@ -49,7 +49,7 @@ def create_driver(chromedriver_path):
         webdriver.Chrome: A configured Chrome WebDriver ready to use.
     """
     options = Options()
-
+    
     if "chrome-headless-shell" in chromedriver_path:
         os_arch = driver_config.detect_os_arch()
         standard_driver_path = driver_config.build_chromedriver_path(os_arch, headless=False)
@@ -64,6 +64,9 @@ def create_driver(chromedriver_path):
 
         service = Service(chromedriver_path)
         return webdriver.Chrome(service=service, options=options)
+    
+    if disable_js:
+        driver_config.disable_javascript(options)
 
 
 def browser(site=None):
