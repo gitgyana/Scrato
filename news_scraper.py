@@ -194,9 +194,11 @@ def browser(site=None):
                     filename = parts[0].strip()
                     size = parts[1].strip()
         
+        pk_placeholder = " AND ".join(f"{key} = ?" for key in config.PRIMARY_KEYS)
+        pk_values = [local()[key] for key in config.PRIMARY_KEYS]
         cursor.execute(
-            f"SELECT 1 FROM {config.TABLE_NAME} WHERE date = ? AND filename = ?",
-            (date, filename)
+            f"SELECT 1 FROM {config.TABLE_NAME} WHERE {pk_placeholder}",
+            pk_values
         ) 
 
         insert_into_db = True
@@ -230,14 +232,14 @@ def browser(site=None):
                 values
             )
 
+            print(f"Completed: {date}: {filename}")
+
         conn.commit()
 
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
             row = {field: locals()[field] for field in config.FIELDNAMES}
             writer.writerow(row)
-
-            print(f"Completed: {date}: {filename}")
 
         successful_records += 1
 
