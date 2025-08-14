@@ -133,11 +133,9 @@ def browser(site=None):
         print("Can't find news list section.")
         return
 
-    fieldnames = ["date", "title", "href", "image1", "image2", "filename", "size", "fileurl"]
-
     if not os.path.isfile(output_file):
         with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
             writer.writeheader()
 
     detail_driver = create_driver(chromedriver_path)
@@ -212,29 +210,25 @@ def browser(site=None):
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
 
         if insert_into_db:
+            header_fields = ', '.join(config.FIELDNAMES)
+            field_placeholder = ', '.join('?' * len(config.FIELDNAMES))
+
+            values = [locals()[field] for field in config.FIELDNAMES]
+
             cursor.execute(
                 f"""
                 INSERT OR IGNORE INTO {config.TABLE} 
-                (date, title, href, image1, image2, filename, size, fileurl) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ({header_fields}) VALUES ({field_placeholder})
                 """,
-                (date, title, href, image1, image2, filename, size, fileurl)
+                values
             )
 
         conn.commit()
 
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writerow({
-                "date": date,
-                "title": title,
-                "href": href,
-                "image1": image1,
-                "image2": image2,
-                "filename": filename,
-                "size": size,
-                "fileurl": fileurl
-            })
+            writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
+            row = {field: locals()[field] for field in config.FIELDNAMES}
+            writer.writerow(row)
 
             print(f"Completed: {date}: {filename}")
 
