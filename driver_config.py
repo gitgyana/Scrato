@@ -62,6 +62,7 @@ def ask_disable_js(timeout=10):
     return result["disable_js"]
 
 
+disable_site_permissions = True
 os_arch = detect_os_arch()
 print(f"OS: {os_arch}")
 time.sleep(2)
