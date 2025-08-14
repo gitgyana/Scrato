@@ -3,6 +3,7 @@ import platform
 import threading
 import time
 
+
 def detect_os_arch():
     system = platform.system().lower()
     machine = platform.machine().lower()
@@ -16,6 +17,7 @@ def detect_os_arch():
     else:
         return None
 
+
 def build_chromedriver_path(os_arch, headless=False):
     filename = 'chromedriver.exe' if 'win' in os_arch else 'chromedriver'
     driver_name = f'chromedriver-{os_arch}'
@@ -24,6 +26,7 @@ def build_chromedriver_path(os_arch, headless=False):
         driver_name = f'chrome-headless-shell-{os_arch}'
 
     return os.path.join('chromedrivers', driver_name, filename)
+
 
 def ask_headless(timeout=10):
     """
@@ -41,6 +44,22 @@ def ask_headless(timeout=10):
     thread.start()
     thread.join(timeout)
     return result["headless"]
+
+
+def ask_disable_js(timeout=10):
+    """
+    Prompt user to disable JavaScript, with timeout; defaults to True.
+    """
+    result = {"disable_js": True}
+
+    def get_input():
+        val = input("Disable JavaScript? (y/N, default y): ").strip().lower()
+        result["disable_js"] = val in ['y', '']
+
+    thread = threading.Thread(target=get_input, daemon=True)
+    thread.start()
+    thread.join(timeout)
+    return result["disable_js"]
 
 
 os_arch = detect_os_arch()
