@@ -70,6 +70,7 @@ chromedriver_path = build_chromedriver_path(os_arch, headless) if os_arch else N
 time.sleep(1.5)
 print(f"Chrome Driver: {chromedriver_path}")
 time.sleep(2)
+disable_js = driver_config.ask_disable_js()
 
 if not os.path.isfile(chromedriver_path):
     raise FileNotFoundError(f"ChromeDriver not found at: {chromedriver_path}")
