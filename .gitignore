@@ -6,3 +6,5 @@ news_output*
 chromedrivers
 chromedrivers/
 *.db
+.db_archive
+.db_archive/
