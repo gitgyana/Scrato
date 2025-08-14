@@ -142,7 +142,14 @@ def browser(site=None):
 
     conn = sqlite3.connect(config.DATABASE)
     cursor = conn.cursor()
-
+    cursor.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {config.TABLE_NAME} (
+            {config.TABLE_HEADER}
+        )
+        """
+    )
+    
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records == 10:
             print("Exceeded 10 continuous old records.")
@@ -188,7 +195,7 @@ def browser(site=None):
                     size = parts[1].strip()
         
         cursor.execute(
-            f"SELECT 1 FROM {config.TABLE} WHERE date = ? AND filename = ?",
+            f"SELECT 1 FROM {config.TABLE_NAME} WHERE date = ? AND filename = ?",
             (date, filename)
         ) 
 
@@ -217,7 +224,7 @@ def browser(site=None):
 
             cursor.execute(
                 f"""
-                INSERT OR IGNORE INTO {config.TABLE} 
+                INSERT OR IGNORE INTO {config.TABLE_NAME} 
                 ({header_fields}) VALUES ({field_placeholder})
                 """,
                 values
