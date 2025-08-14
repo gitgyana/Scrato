@@ -32,6 +32,7 @@ import driver_config
 
 existing_records = 0
 successful_records = 0
+current_pdate = None
 
 def create_driver(chromedriver_path):
     """
@@ -95,6 +96,7 @@ def browser(site=None):
 
     global existing_records
     global successful_records
+    global current_pdate
 
     now = datetime.now()
     formatted_ym = now.strftime("%Y.%m")
@@ -151,8 +153,8 @@ def browser(site=None):
     )
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
-        if existing_records == 10:
-            print("Exceeded 10 continuous old records.")
+        if existing_records == 50:
+            print("Exceeded 50 continuous old records.")
             break
 
         title_tag = li.find(config.TITLE_A_TAG, title=True)
@@ -165,6 +167,10 @@ def browser(site=None):
                 date = datetime.strptime(date, "%d.%m.%Y").strftime("%Y.%m.%d")
             except ValueError:
                 pass
+
+        if config.END_DATE in date:
+            print("Encounted terminate date.")
+            break
 
         if config.TITLE_FILTER_INCLUDE not in title:
             continue
@@ -195,7 +201,7 @@ def browser(site=None):
                     size = parts[1].strip()
         
         pk_placeholder = " AND ".join(f"{key} = ?" for key in config.PRIMARY_KEYS)
-        pk_values = [local()[key] for key in config.PRIMARY_KEYS]
+        pk_values = [locals()[key] for key in config.PRIMARY_KEYS]
         cursor.execute(
             f"SELECT 1 FROM {config.TABLE_NAME} WHERE {pk_placeholder}",
             pk_values
@@ -221,7 +227,7 @@ def browser(site=None):
         if insert_into_db:
             header_fields = ', '.join(config.FIELDNAMES)
             field_placeholder = ', '.join('?' * len(config.FIELDNAMES))
-
+            process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
             values = [locals()[field] for field in config.FIELDNAMES]
 
             cursor.execute(
@@ -254,13 +260,15 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
-    bit_flip = 0
     page_no = 1
     while True:
         if page_no > 110:
             page_no = 1
 
-        status = browser(config.WEBSITES[bit_flip].replace("| PAGENO |", str(page_no)))
+        for website in config.WEBSITES:
+            site = website.replace("| PAGENO |", str(page_no))
+            browser(site)
+
         page_no += 1
         if existing_records == 10:
             page_no = 1
