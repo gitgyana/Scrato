@@ -28,6 +28,11 @@ TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
 
 WEBSITE = "https://example.com/news-page-| PAGENO |.html#gsc.tab=0"
+WEBSITES = [
+	"https://example.com/news-page-| PAGENO |.html#gsc.tab=0",
+	"https://example.com/headline-page-| PAGENO |.html#gsc.tab=0"
+	. . .
+]
 OUTPUT_DATETIME = "2025.08.12_01.12.34"
 
 DATABASE = 'database.db'
