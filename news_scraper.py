@@ -142,7 +142,7 @@ def browser(site=None):
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records == 10:
             print("Exceeded 10 continuous old records.")
-            return
+            break
 
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
@@ -188,11 +188,12 @@ def browser(site=None):
             (date, filename)
         ) 
 
+        insert_into_db = True
         result = cursor.fetchone()
         if result:
             print("Composite key exists. Skipping DB insert.")
             existing_records += 1
-            continue
+            insert_into_db = False
 
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
@@ -204,14 +205,15 @@ def browser(site=None):
 
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
 
-        cursor.execute(
-            f"""
-            INSERT OR IGNORE INTO {config.TABLE} 
-            (date, title, href, image1, image2, filename, size, fileurl) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (date, title, href, image1, image2, filename, size, fileurl)
-        )
+        if insert_into_db:
+            cursor.execute(
+                f"""
+                INSERT OR IGNORE INTO {config.TABLE} 
+                (date, title, href, image1, image2, filename, size, fileurl) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (date, title, href, image1, image2, filename, size, fileurl)
+            )
 
         conn.commit()
 
@@ -243,11 +245,16 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
+    bit_flip = 0
     page_no = 1
     while True:
-        status = browser(config.WEBSITE.replace("| PAGENO |", str(page_no)))
+        if page_no > 110:
+            page_no = 1
+
+        status = browser(config.WEBSITES[bit_flip].replace("| PAGENO |", str(page_no)))
         page_no += 1
         if existing_records == 10:
             page_no = 1
             existing_records = 1
+            bit_flip = 1 - bit_flip
 
