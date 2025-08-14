@@ -1,6 +1,7 @@
-# Template for config.py
+# config.py
+from datetime import datetime
 
-# CSS classes and element identifiers
+# CSS classes and element identifiers for scraping
 PARENT_DIV_CLASS = "category_news_phai_chinh"
 NEWS_LIST_DIV_CLASS = "category_news"
 NEWS_LIST_UL_TAG = "ul"
@@ -17,23 +18,57 @@ DETAIL_IMAGE1_DIV_CLASS = "fisrst_sc"
 DETAIL_IMAGE1_IMG_TAG = "img"
 DETAIL_IMAGE2_DIV_CLASS = "Recipepod"
 
-# File size prefix in text
+# File size prefix in text extraction
 FILE_SIZE_PREFIX = "File size:"
 
-# Providers for filtering file links
+# Providers for filtering download/file links
 FILE_PROVIDERS = ["source1", "source2", "source3", "source4"]
 
-# Title filtering strings
+# Title filtering criteria
 TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
 
+# Target websites for scraping (pagination placeholder | PAGENO |)
 WEBSITE = "https://example.com/news-page-| PAGENO |.html#gsc.tab=0"
 WEBSITES = [
-	"https://example.com/news-page-| PAGENO |.html#gsc.tab=0",
-	"https://example.com/headline-page-| PAGENO |.html#gsc.tab=0"
-	. . .
+    "https://example.com/news-page-| PAGENO |.html#gsc.tab=0",
+    "https://example.com/headline-page-| PAGENO |.html#gsc.tab=0",
+    # Add more URLs as needed...
 ]
-OUTPUT_DATETIME = "2025.08.12_01.12.34"
 
+# Output timestamp for files and logs
+OUTPUT_DATETIME = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+
+# Cleaned datetime for DB default values or identifiers
+REFINE_DT = OUTPUT_DATETIME.replace('.', '').replace(':', '').replace(' ', '').replace('-', '').replace('_', '')
+
+# End date filter for scraping or processing
+END_DATE = "2025.08"
+
+# Database config
 DATABASE = 'database.db'
-TABLE = 'table_0'
+TABLE_NAME = 'table_0'
+
+# Database fields & primary keys
+FIELDNAMES = [
+    "date",
+    "site",
+    "title",
+    "href",
+    "image1",
+    "image2",
+    "filename",
+    "size",
+    "fileurl",
+    "process_dt",
+]
+
+PRIMARY_KEYS = ["date", "filename"]
+
+# SQL Table creation header string for SQLite or similar
+TABLE_HEADER = ', '.join(
+    f"{col} TEXT NOT NULL DEFAULT FILE_{REFINE_DT}" if col == 'filename'
+    else f"{col} TEXT NOT NULL DEFAULT {REFINE_DT}" if col == 'date'
+    else f"{col} TEXT"
+    for col in FIELDNAMES
+) + f", PRIMARY KEY ({', '.join(PRIMARY_KEYS)})"
