@@ -35,38 +35,51 @@ successful_records = 0
 current_pdate = None
 
 
-def database_op(
-        data: dict = None, 
-        db_name: str = config.DATABASE, 
-        table_name: str = config.TABLE_NAME, 
-        table_header: list = config.TABLE_HEADER,
-    ) -> bool:
+def database_op(data: dict = None, db_name: str, table_name: str, table_header: list) -> bool:
     """
-    Perform operation on a sequence of data onto a table of a perticular database.
+    Perform insert operation on a dictionary data onto a table of a particular database.
 
     Parameters:
-        data (dict) [MANDATORY]: 
+        data (dict, required): 
                     Dictionary of data in `attr: value` pairs to be inserted.
-        db_name (str) [DEFAULT -> DATABASE from config.py]: 
+        db_name (str, default: `YYYY.MM.DD_HH.MM.SS.db`): 
                     Database name or path. If database not found, then it is created.
-        table_name (str) [DEFAULT -> TABLE_NAME from config.py]: 
+        table_name (str, default: `table_YYYYMMDD_HHMMSS`): 
                     Table name where data will be inserted. If table not found, 
                     then it is created inside the given database.
-                    FORMAT: 
-                        field1 DATATYPE [NOT NULL] [DAFAULT val],
-                        field2 DATATYPE [NOT NULL] [DAFAULT val],
-                        field3 DATATYPE [NOT NULL] [DAFAULT val],
-                        . . .,
-                        PRIMARY KEY (FIELD_N, FIELD_N)
-        table_header (list) [DEFAULT -> TABLE_HEADER from config.py]:
+        table_header (str, default: keys from data as TEXT):
                     Table header row to which data will be inserted correspondingly.
+                    FORMAT: 
+                        ```
+                        field1 DATATYPE [NOT NULL] [DEFAULT val],
+                        field2 DATATYPE [NOT NULL] [DEFAULT val],
+                        field3 DATATYPE [NOT NULL] [DEFAULT val],
+                        . . .,
+                        [PRIMARY KEY (FIELD_N, FIELD_N)]
+                        ```
 
     Returns:
         bool: True for successful operation. Otherwise False.
     """
+
+    global existing_records
+    dt_now = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+
     if not data:
         print("WARNING: Missing data dictionary")
         return False
+
+    if not db_name:
+        db_name = dt_now + ".db"
+
+    if not table_name:
+        table_name = "table_" + dt_now.replace('.', '')
+
+    if not table_header:
+        table_name = ", ".join(
+            f"{field} TEXT"
+            for field in data
+        )
 
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -109,6 +122,7 @@ def database_op(
             
                 if cursor.fetchone():
                     print("Key values exists. Skipping DB insert.")
+                    existing_records += 1
                     op_success = False
 
             except Exception:
@@ -313,13 +327,6 @@ def browser(site=None):
                     filename = parts[0].strip()
                     size = parts[1].strip()
         
-        # SHIFTED CODES TO database_op()
-        # insert_into_db = database_op(check_pk_values=pk_values)
-        # if not insert_into_db:
-        #     existing_records += 1
-
-        pk_values = [locals()[key] for key in config.PRIMARY_KEYS]
-
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
             file_list = []
@@ -333,10 +340,13 @@ def browser(site=None):
     
         row = {field: locals()[field] for field in config.FIELDNAMES}
 
-        # SHIFTED CODES TO database_op()
-
-        conn.commit()
-
+        database_op(
+            data = row, 
+            db_name = config.DATABASE, 
+            table_name = config.TABLE_NAME, 
+            table_header = config.TABLE_HEADER,
+        )
+        
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
             
