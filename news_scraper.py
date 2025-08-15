@@ -36,35 +36,74 @@ current_pdate = None
 
 
 def database_op(
-    data: list = None, db_name: str = config.DATABASE, 
-    table_name: str = config.TABLE_NAME, table_header: list = config.TABLE_HEADER
-    ) -> op_status: bool:
+        data: dict = None, 
+        db_name: str = config.DATABASE, 
+        table_name: str = config.TABLE_NAME, 
+        table_header: list = config.TABLE_HEADER,
+    ) -> bool:
     """
-    Insert a sequence of data into a table of a perticular database.
+    Perform operation on a sequence of data onto a table of a perticular database.
 
     Parameters:
-        data (list) [MANDATORY]: Sequence of data to be inserted.
-        db_name (str) [DEFAULT: DATABASE from config.py]: 
+        data (dict) [MANDATORY]: 
+                    Dictionary of data in `attr: value` pairs to be inserted.
+        db_name (str) [DEFAULT -> DATABASE from config.py]: 
                     Database name or path. If database not found, then it is created.
-        table_name (str) [DEFAULT: TABLE_NAME from config.py]: 
+        table_name (str) [DEFAULT -> TABLE_NAME from config.py]: 
                     Table name where data will be inserted. If table not found, 
                     then it is created inside the given database.
-        table_header (list) [DEFAULT: TABLE_HEADER from config.py]:
+        table_header (list) [DEFAULT -> TABLE_HEADER from config.py]:
                     Table header row to which data will be inserted correspondingly.
 
     Returns:
-        op_status (bool): True for successful operation. Otherwise False.
+        bool: True for successful operation. Otherwise False.
     """
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
-    cursor.execute(
-        f"""
-        CREATE TABLE IF NOT EXISTS {table_name} (
-            {table_header}
+    op_status = True
+
+    try:
+        conn = sqlite3.connect(db_name)
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                {table_header}
+            )
+            """
         )
-        """
-    )
+    except Exception:
+        print("ERROR: DB connect / TABLE creation")
+        return False
     
+    pk_attr = [
+        data[1]
+        for data in cursor.execute(f"PRAGMA TABLE_INFO({table_name})").fetchall()
+        if data[-1] != 0
+    ]
+
+    pk_values = [data[key] for key in pk_attr]
+    
+    if not pk_values:
+        print("WARNING: Missing primary keys value.")
+        return False
+    
+    try:
+        pk_placeholder = " AND ".join(f"{key} = ?" for key in pk_attr)
+        
+        cursor.execute(
+            f"SELECT 1 FROM {table_name} WHERE {pk_placeholder}",
+            pk_values
+        ) 
+    
+        if cursor.fetchone():
+            print("Key values exists. Skipping DB insert.")
+            return False
+
+    except Exception:
+        print("ERROR: Checking Primary Key")
+        return False
+
+    
+
 
 
 
@@ -240,19 +279,12 @@ def browser(site=None):
                     filename = parts[0].strip()
                     size = parts[1].strip()
         
-        pk_placeholder = " AND ".join(f"{key} = ?" for key in config.PRIMARY_KEYS)
-        pk_values = [locals()[key] for key in config.PRIMARY_KEYS]
-        cursor.execute(
-            f"SELECT 1 FROM {config.TABLE_NAME} WHERE {pk_placeholder}",
-            pk_values
-        ) 
-
-        insert_into_db = True
-        result = cursor.fetchone()
-        if result:
-            print("Composite key exists. Skipping DB insert.")
+        # SHIFTED CODES TO database_op()
+        insert_into_db = database_op(check_pk_values=pk_values)
+        if not insert_into_db:
             existing_records += 1
-            insert_into_db = False
+
+        pk_values = [locals()[key] for key in config.PRIMARY_KEYS]
 
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
