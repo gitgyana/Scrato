@@ -400,7 +400,12 @@ def browser(site=None):
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
         process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
     
-        row = {field: locals()[field] for field in config.FIELDNAMES}
+        try:
+            row = {field: locals()[field] for field in config.FIELDNAMES}
+        except Exception as e:
+            log("error", str(e))
+            row = eval(config.ROW_HARDCODE)
+            log("info", f"Using hardcode: {row}")
 
         database_op(
             data = row, 
@@ -429,12 +434,12 @@ if __name__ == "__main__":
     page_no_116 = 110
     while True:
         for page_no in range(1, page_no_116):
-            site = config.WEBSITES[1]("| PAGENO |", str(page_no))
+            site = config.WEBSITES[1].replace("| PAGENO |", str(page_no))
             log("info", site)
             browser(site)
 
         for page_no in range(1, page_no_81):
-            site = config.WEBSITES[0]("| PAGENO |", str(page_no))
+            site = config.WEBSITES[0].replace("| PAGENO |", str(page_no))
             log("info", site)
             browser(site)
 
