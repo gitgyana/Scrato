@@ -305,7 +305,7 @@ def browser(site=None):
         formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
 
     os.makedirs(os.path.join("Outputs", formatted_ym), exist_ok=True)
-    output_file = os.path.join("Outputs", formatted_ym, f"news_output_{formatted_dt}.csv")
+    output_file = config.CSV_FILE
     
     if not site:
         site = input("Enter site URL to scrape: ").strip()
@@ -425,19 +425,16 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
-    page_no = 1
+    page_no_81 = 3000
+    page_no_116 = 110
     while True:
-        if page_no > 110:
-            page_no = 1
-
-        for website in config.WEBSITES:
-            site = website.replace("| PAGENO |", str(page_no))
+        for page_no in range(1, page_no_116):
+            site = config.WEBSITES[1]("| PAGENO |", str(page_no))
             log("info", site)
             browser(site)
 
-        page_no += 1
-        if existing_records == 10:
-            page_no = 1
-            existing_records = 1
-            bit_flip = 1 - bit_flip
+        for page_no in range(1, page_no_81):
+            site = config.WEBSITES[0]("| PAGENO |", str(page_no))
+            log("info", site)
+            browser(site)
 
