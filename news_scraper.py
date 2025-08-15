@@ -35,6 +35,39 @@ successful_records = 0
 current_pdate = None
 
 
+def database_op(
+    data: list = None, db_name: str = config.DATABASE, 
+    table_name: str = config.TABLE_NAME, table_header: list = config.TABLE_HEADER
+    ) -> op_status: bool:
+    """
+    Insert a sequence of data into a table of a perticular database.
+
+    Parameters:
+        data (list) [MANDATORY]: Sequence of data to be inserted.
+        db_name (str) [DEFAULT: DATABASE from config.py]: 
+                    Database name or path. If database not found, then it is created.
+        table_name (str) [DEFAULT: TABLE_NAME from config.py]: 
+                    Table name where data will be inserted. If table not found, 
+                    then it is created inside the given database.
+        table_header (list) [DEFAULT: TABLE_HEADER from config.py]:
+                    Table header row to which data will be inserted correspondingly.
+
+    Returns:
+        op_status (bool): True for successful operation. Otherwise False.
+    """
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            {table_header}
+        )
+        """
+    )
+    
+
+
+
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
     """
     Create and configure a Chrome WebDriver instance.
@@ -157,15 +190,7 @@ def browser(site=None):
 
     detail_driver = create_driver(chromedriver_path, driver_config)
 
-    conn = sqlite3.connect(config.DATABASE)
-    cursor = conn.cursor()
-    cursor.execute(
-        f"""
-        CREATE TABLE IF NOT EXISTS {config.TABLE_NAME} (
-            {config.TABLE_HEADER}
-        )
-        """
-    )
+    # SHIFTED CODES TO database_op()
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records > 50:
