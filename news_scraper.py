@@ -52,15 +52,25 @@ def database_op(
         table_name (str) [DEFAULT -> TABLE_NAME from config.py]: 
                     Table name where data will be inserted. If table not found, 
                     then it is created inside the given database.
+                    FORMAT: 
+                        field1 DATATYPE [NOT NULL] [DAFAULT val],
+                        field2 DATATYPE [NOT NULL] [DAFAULT val],
+                        field3 DATATYPE [NOT NULL] [DAFAULT val],
+                        . . .,
+                        PRIMARY KEY (FIELD_N, FIELD_N)
         table_header (list) [DEFAULT -> TABLE_HEADER from config.py]:
                     Table header row to which data will be inserted correspondingly.
 
     Returns:
         bool: True for successful operation. Otherwise False.
     """
+    if not data:
+        print("WARNING: Missing data dictionary")
+        return False
+
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
     try:
-        conn = sqlite3.connect(db_name)
-        cursor = conn.cursor()
         cursor.execute(
             f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
@@ -70,6 +80,8 @@ def database_op(
         )
     except Exception:
         print("ERROR: DB connect / TABLE creation")
+        conn.commit()
+        conn.close()
         return False
     
     pk_attr = [
@@ -78,28 +90,35 @@ def database_op(
         if data[-1] != 0
     ]
 
-    pk_values = [data[key] for key in pk_attr]
-    
-    if not pk_values:
-        print("WARNING: Missing primary keys value.")
-        return False
-    
-    try:
-        pk_placeholder = " AND ".join(f"{key} = ?" for key in pk_attr)
+    op_success = True
+
+    if pk_attr:
+        pk_values = [data[key] for key in pk_attr]
         
-        cursor.execute(
-            f"SELECT 1 FROM {table_name} WHERE {pk_placeholder}",
-            pk_values
-        ) 
-    
-        if cursor.fetchone():
-            print("Key values exists. Skipping DB insert.")
-            return False
+        if not pk_values:
+            print("WARNING: Missing primary keys value.")
+            op_success = False
+        else:
+            try:
+                pk_placeholder = " AND ".join(f"{key} = ?" for key in pk_attr)
+                
+                cursor.execute(
+                    f"SELECT 1 FROM {table_name} WHERE {pk_placeholder}",
+                    pk_values
+                ) 
+            
+                if cursor.fetchone():
+                    print("Key values exists. Skipping DB insert.")
+                    op_success = False
 
-    except Exception:
-        print("ERROR: Checking Primary Key")
-        return False
+            except Exception:
+                print("ERROR: Checking Primary Key")
+                op_success = False
 
+        if not op_success:
+            conn.commit()
+            conn.close()
+            return op_success
 
     header_fields = ', '.join(str(field) for field in data.keys())
     field_placeholder = ', '.join('?' * len(data))
@@ -115,11 +134,13 @@ def database_op(
         )
     except Exception:
         print("ERROR: DB Insert Operation")
-        return False
+        op_success = False
     else:
         print(f"Completed: {date}: {filename}")
 
-    return True 
+    conn.commit()
+    conn.close()
+    return op_success
 
 
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
@@ -243,8 +264,6 @@ def browser(site=None):
             writer.writeheader()
 
     detail_driver = create_driver(chromedriver_path, driver_config)
-
-    # SHIFTED CODES TO database_op()
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records > 50:
