@@ -35,7 +35,7 @@ successful_records = 0
 current_pdate = None
 
 
-def database_op(data: dict = None, db_name: str, table_name: str, table_header: list) -> bool:
+def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool:
     """
     Perform insert operation on a dictionary data onto a table of a particular database.
 
@@ -63,7 +63,8 @@ def database_op(data: dict = None, db_name: str, table_name: str, table_header: 
     """
 
     global existing_records
-    dt_now = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    
+    dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not data:
         print("WARNING: Missing data dictionary")
@@ -71,15 +72,18 @@ def database_op(data: dict = None, db_name: str, table_name: str, table_header: 
 
     if not db_name:
         db_name = dt_now + ".db"
+        print(f"DB_NAME: {db_name}")
 
     if not table_name:
-        table_name = "table_" + dt_now.replace('.', '')
+        table_name = "table_" + dt_now
+        print(f"TABLE NAME: {table_name}")
 
     if not table_header:
-        table_name = ", ".join(
+        table_header = ", ".join(
             f"{field} TEXT"
             for field in data
         )
+        print(f"TABLE HEADER: \n{table_header}\n")
 
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -95,6 +99,7 @@ def database_op(data: dict = None, db_name: str, table_name: str, table_header: 
         print("ERROR: DB connect / TABLE creation")
         conn.commit()
         conn.close()
+        raise Exception()
         return False
     
     pk_attr = [
@@ -150,7 +155,13 @@ def database_op(data: dict = None, db_name: str, table_name: str, table_header: 
         print("ERROR: DB Insert Operation")
         op_success = False
     else:
-        print(f"Completed: {date}: {filename}")
+        success_msg = f"Completed: "
+        if pk_attr:
+            success_msg += f"{pk_values}"
+        else:
+            success_msg += f"{[val[:10] for val in data.values()]}"
+
+        print(success_msg)
 
     conn.commit()
     conn.close()
