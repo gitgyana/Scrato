@@ -35,23 +35,37 @@ existing_records = 0
 successful_records = 0
 current_pdate = None
 
-logging_file = os.path.join(
-    config.LOG_DIR, 
-    datetime.now().strftime("%Y.%m"), 
-    f"{datetime.now().strftime("%Y.%m.%d_%H.%M.%S")}"
-)
-os.makedirs(logging_file, exist_ok=True)
+log_dir = os.path.join(config.LOG_DIR, datetime.now().strftime("%Y.%m"))
+os.makedirs(log_dir, exist_ok=True)
+
+log_file = os.path.join(log_dir, f"{datetime.now().strftime('%Y.%m.%d_%H.%M.%S')}.log")
 
 logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.FileHandler(logging_file),
+        logging.FileHandler(log_file),
         logging.StreamHandler()
-    ]
+    ],
 )
 
-logger = logging.getLogger(__name__)
+def log(level: str, message: str) -> None:
+    """
+    Log a message with the given level.
+
+    Parameters:
+        level (str): Logging level as a string. 
+                     Examples: 'debug', 'info', 'warning', 'error', 'critical'.
+                     Case-insensitive.
+        message (str): The message to log.
+
+    Returns:
+        None
+    """
+    level = level.upper()
+    numeric_level = getattr(logging, level, logging.INFO)
+    logging.log(numeric_level, message)
 
 
 def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool:
@@ -118,7 +132,6 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         print("ERROR: DB connect / TABLE creation")
         conn.commit()
         conn.close()
-        raise Exception()
         return False
     
     pk_attr = [
