@@ -354,8 +354,6 @@ def browser(site=None):
 
         successful_records += 1
 
-    conn.commit()
-    conn.close()
     detail_driver.quit()
     if successful_records == 0:
         print("ZERO SUCCESSFUL RECORDS FOUND")
