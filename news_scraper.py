@@ -403,9 +403,12 @@ def browser(site=None):
         try:
             row = {field: locals()[field] for field in config.FIELDNAMES}
         except Exception as e:
-            log("error", str(e))
+            log("error", f"{str(e)}. Using hardcode")
             row = eval(config.ROW_HARDCODE)
-            log("info", f"Using hardcode: {row}")
+            log(
+                "info", 
+                "Hardcode data: {" + ", ".join(f"{key}: {value}" for key, value in row.items()) + "}"
+            )
 
         database_op(
             data = row, 
