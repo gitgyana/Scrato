@@ -58,8 +58,6 @@ def database_op(
     Returns:
         bool: True for successful operation. Otherwise False.
     """
-    op_status = True
-
     try:
         conn = sqlite3.connect(db_name)
         cursor = conn.cursor()
@@ -102,9 +100,26 @@ def database_op(
         print("ERROR: Checking Primary Key")
         return False
 
-    
 
+    header_fields = ', '.join(str(field) for field in data.keys())
+    field_placeholder = ', '.join('?' * len(data))
+    values = [value for value in data.values()]
 
+    try:
+        cursor.execute(
+            f"""
+            INSERT OR IGNORE INTO {table_name} 
+            ({header_fields}) VALUES ({field_placeholder})
+            """,
+            values
+        )
+    except Exception:
+        print("ERROR: DB Insert Operation")
+        return False
+    else:
+        print(f"Completed: {date}: {filename}")
+
+    return True 
 
 
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
@@ -280,9 +295,9 @@ def browser(site=None):
                     size = parts[1].strip()
         
         # SHIFTED CODES TO database_op()
-        insert_into_db = database_op(check_pk_values=pk_values)
-        if not insert_into_db:
-            existing_records += 1
+        # insert_into_db = database_op(check_pk_values=pk_values)
+        # if not insert_into_db:
+        #     existing_records += 1
 
         pk_values = [locals()[key] for key in config.PRIMARY_KEYS]
 
@@ -295,28 +310,17 @@ def browser(site=None):
             fileurl_dict[p] = file_list
 
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
+        process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    
+        row = {field: locals()[field] for field in config.FIELDNAMES}
 
-        if insert_into_db:
-            header_fields = ', '.join(config.FIELDNAMES)
-            field_placeholder = ', '.join('?' * len(config.FIELDNAMES))
-            process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-            values = [locals()[field] for field in config.FIELDNAMES]
-
-            cursor.execute(
-                f"""
-                INSERT OR IGNORE INTO {config.TABLE_NAME} 
-                ({header_fields}) VALUES ({field_placeholder})
-                """,
-                values
-            )
-
-            print(f"Completed: {date}: {filename}")
+        # SHIFTED CODES TO database_op()
 
         conn.commit()
 
         with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
-            row = {field: locals()[field] for field in config.FIELDNAMES}
+            
             writer.writerow(row)
 
         successful_records += 1
