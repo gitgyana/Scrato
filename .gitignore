@@ -8,3 +8,5 @@ chromedrivers/
 *.db
 .db_archive
 .db_archive/
+Logs
+Logs/

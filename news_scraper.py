@@ -19,6 +19,7 @@ import csv
 import os
 import threading
 import sqlite3
+import logging
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -33,6 +34,24 @@ import driver_config
 existing_records = 0
 successful_records = 0
 current_pdate = None
+
+logging_file = os.path.join(
+    config.LOG_DIR, 
+    datetime.now().strftime("%Y.%m"), 
+    f"{datetime.now().strftime("%Y.%m.%d_%H.%M.%S")}"
+)
+os.makedirs(logging_file, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s',
+    handlers=[
+        logging.FileHandler(logging_file),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 
 def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool:
