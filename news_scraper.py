@@ -68,6 +68,25 @@ def log(level: str, message: str) -> None:
     logging.log(numeric_level, message)
 
 
+log(
+    "info",
+    "".join(
+        f"\n{' ' * 28} {key}: {value}" 
+        for key, value in config.__dict__.items() 
+        if not key.startswith("__")
+    )
+)
+
+log(
+    "info",
+    "".join(
+        f"\n{' ' * 28} {key}: {value}" 
+        for key, value in driver_config.__dict__.items() 
+        if not key.startswith("__")
+    )
+)
+
+
 def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool:
     """
     Perform insert operation on a dictionary data onto a table of a particular database.
@@ -100,23 +119,23 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
     dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not data:
-        print("WARNING: Missing data dictionary")
+        log("warning", "Missing data dictionary")
         return False
 
     if not db_name:
         db_name = dt_now + ".db"
-        print(f"DB_NAME: {db_name}")
+        log("info", f"DB_NAME: {db_name}")
 
     if not table_name:
         table_name = "table_" + dt_now
-        print(f"TABLE NAME: {table_name}")
+        log("info", f"TABLE NAME: {table_name}")
 
     if not table_header:
         table_header = ", ".join(
             f"{field} TEXT"
             for field in data
         )
-        print(f"TABLE HEADER: \n{table_header}\n")
+        log("info", f"TABLE HEADER: {table_header}")
 
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
@@ -129,7 +148,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
             """
         )
     except Exception:
-        print("ERROR: DB connect / TABLE creation")
+        log("error", "DB connect / TABLE creation")
         conn.commit()
         conn.close()
         return False
@@ -146,7 +165,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         pk_values = [data[key] for key in pk_attr]
         
         if not pk_values:
-            print("WARNING: Missing primary keys value.")
+            log("warning", "Missing primary keys value.")
             op_success = False
         else:
             try:
@@ -158,12 +177,12 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
                 ) 
             
                 if cursor.fetchone():
-                    print("Key values exists. Skipping DB insert.")
+                    log("info", "Key values exists. Skipping DB insert.")
                     existing_records += 1
                     op_success = False
 
             except Exception:
-                print("ERROR: Checking Primary Key")
+                log("error", "Checking Primary Key")
                 op_success = False
 
         if not op_success:
@@ -184,7 +203,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
             values
         )
     except Exception:
-        print("ERROR: DB Insert Operation")
+        log("error", "DB Insert Operation")
         op_success = False
     else:
         success_msg = f"Completed: "
@@ -193,7 +212,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         else:
             success_msg += f"{[val[:10] for val in data.values()]}"
 
-        print(success_msg)
+        log("info", success_msg)
 
     conn.commit()
     conn.close()
@@ -271,7 +290,7 @@ def browser(site=None):
         - Creates output directories and files under "Outputs".
         - Writes news data to a CSV file.
         - Inserts records into a SQLite database.
-        - Prints status and error messages to stdout.
+        - Prints status and error messages to logger.
     """
 
     global existing_records
@@ -302,17 +321,17 @@ def browser(site=None):
 
     parent_div = soup.find("div", class_=config.PARENT_DIV_CLASS)
     if not parent_div:
-        print("Can't find main content div.")
+        log("warning", "Can't find main content div.")
         return
 
     news_section_div = parent_div.find("div", class_=config.NEWS_LIST_DIV_CLASS)
     if not news_section_div:
-        print("Can't find news list div.")
+        log("warning", "Can't find news list div.")
         return
 
     news_section = news_section_div.find(config.NEWS_LIST_UL_TAG)
     if not news_section:
-        print("Can't find news list section.")
+        log("warning", "Can't find news list section.")
         return
 
     if not os.path.isfile(output_file):
@@ -324,7 +343,7 @@ def browser(site=None):
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
         if existing_records > 50:
-            print("Exceeded 50 continuous old records.")
+            log("warning", "Exceeded 50 continuous old records.")
             break
 
         title_tag = li.find(config.TITLE_A_TAG, title=True)
@@ -339,7 +358,7 @@ def browser(site=None):
                 pass
 
         if config.END_DATE in date:
-            print("Encounted terminate date.")
+            log("warning", "Encounted terminate date.")
             break
 
         if config.TITLE_FILTER_INCLUDE not in title:
@@ -399,9 +418,9 @@ def browser(site=None):
 
     detail_driver.quit()
     if successful_records == 0:
-        print("ZERO SUCCESSFUL RECORDS FOUND")
+        log("warning", "ZERO SUCCESSFUL RECORDS FOUND")
     else:
-        print(f"Scraping completed. Data saved to {output_file}")
+        log("info", f"Scraping completed. Data saved to {output_file}")
         successful_records = 0
 
 
@@ -413,6 +432,7 @@ if __name__ == "__main__":
 
         for website in config.WEBSITES:
             site = website.replace("| PAGENO |", str(page_no))
+            log("info", site)
             browser(site)
 
         page_no += 1
