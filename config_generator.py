@@ -202,13 +202,34 @@ class ConfigGenerator:
                         classes = self.get_nearest_class(element)
 
                     item_candidates[classes].append(element)
+        
+        best_pattern = None
+        max_count = 0
+        
+        for classes, elements in item_candidates.items():
+            if len(elements) >= 3:
+                if len(elements) > max_count:
+                    max_count = len(elements)
+                    best_pattern = (classes, elements)
+        
+        if best_pattern:
+            classes, elements = best_pattern
+            sample_element = elements[0]
+            
+            result = {
+                'tag': sample_element.name,
+                'class': ' '.join(classes),
+                'selector': self.generate_css_selector(sample_element),
+                'count': len(elements),
+            }
+            
+            print(f"{self.process_indent}Found {result['count']} news items: {result['selector']}")
+            return result
+        
+        print(f"{self.process_indent}!! Could not detect consistent news item pattern")
+        return None
 
-        print(len(item_candidates))
-        a = '\n'.join(
-            f'{key}: {values[0].name}' # if len(values) < 4 else f'{values[0]}'
-            for key, values in item_candidates.items()
-        )
-        print(a)
+        
 
 
 
