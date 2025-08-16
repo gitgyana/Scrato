@@ -33,7 +33,7 @@ class ConfigGenerator:
 
         # Possible date patterns
         # Numeric Date Patterns (Flexible Formats)
-        self.date_patterns = [
+        self.DATE_PATTERNS = [
             r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}',    # MM/DD/YYYY or D/M/YY
             r'\d{4}[/-]\d{1,2}[/-]\d{1,2}',      # YYYY/MM/DD
             r'^[0-3]?[0-9][./-][0-3]?[0-9][./-](?:\d{2})?\d{2}$',        # D.M.Y
@@ -43,14 +43,14 @@ class ConfigGenerator:
             r'\d{6}',    # YYMMDD
         ]
         # Dates with Month Names (Short & Long)
-        self.date_patterns += [
+        self.DATE_PATTERNS += [
             r'\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*,?\s*\d{2,4}',  # "10 Jan, 2025"
             r'(Jan|Feb|...|Dec)\s+\d{1,2},?\s*\d{2,4}',                                     # "Jan 10, 2025"
             r'\d{1,2}\s+(January|...|December)\s*,?\s*\d{2,4}',    # "10 January, 2025"
             r'(January|...)\s+\d{1,2},?\s*\d{2,4}',                # "January 10, 2025"
         ]
         # Leap-Year Aware Patterns (DD/MM/YYYY with Checks)
-        self.date_patterns += [
+        self.DATE_PATTERNS += [
             r'^(?:(?:31([\/\-.])(?:0?[13578]|1[02]))\1|'
             r'(?:(?:29|30)\1(?:0?[13-9]|1[0-2]))\1)'
             r'(?:(?:1[6-9]|[2-9]\d)?\d{2})$|'
@@ -62,13 +62,13 @@ class ConfigGenerator:
             r'(?:(?:1[6-9]|[2-9]\d)?\d{2})$',
         ]
         # ISO 8601 & Timestamp Formats
-        self.date_patterns += [
+        self.DATE_PATTERNS += [
             r'^\d{4}-\d{2}-\d{2}$',                              # YYYY-MM-DD
             r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',            # ISO datetime
             r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?$',     # With milliseconds and optional Z
         ]
         # RFC 2822 & Ordinal Day Formats
-        self.date_patterns += [
+        self.DATE_PATTERNS += [
             r'^(Mon|Tue|...|Sun),\s\d{2}\s(?:Jan|...|Dec)\s\d{4}\s'
             r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\s'
             r'(?:[+-]\d{4}|UT|GMT)$',
@@ -76,7 +76,7 @@ class ConfigGenerator:
             r'(Jan|...|Dec)\s+\d{1,2}(st|nd|rd|th),\s+\d{4}',
         ]
         # Relative Dates & Simple Relative Words
-        self.date_patterns += [
+        self.DATE_PATTERNS += [
             r'\d+\s+(hours?|days?|weeks?|months?)\s+ago',
             r'^(?:today|yesterday|tomorrow)$',
             r'^(?:last|next)\s+(week|month|year)$',
@@ -333,6 +333,31 @@ class ConfigGenerator:
         return None
 
 
+    def find_date_in_item(self, item):
+        """Find the date element within a news item"""
+        for element in item.find_all(['span', 'div', 'time', 'p']):
+            text = element.get_text().strip()
+            classes = ' '.join(element.get('class', [])).lower()
+            
+            for pattern in self.DATE_PATTERNS:
+                if re.search(pattern, text, re.IGNORECASE):
+                    return {
+                        'tag': element.name,
+                        'class': ' '.join(element.get('class', [])),
+                        'selector': self.generate_css_selector(element)
+                    }
+            
+            for indicator in self.DATE_INDICATORS:
+                if indicator in classes and len(text) > 5:
+                    return {
+                        'tag': element.name,
+                        'class': ' '.join(element.get('class', [])),
+                        'selector': self.generate_css_selector(element)
+                    }
+        
+        return None
+
+    
     def get_nearest_class(self, element, max_depth=3):
         depth = 0
         while element and depth < max_depth:
