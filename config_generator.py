@@ -25,30 +25,31 @@ from datetime import datetime
 
 class ConfigGenerator:
     def __init__(self):
+        self.process_indent = ' ' * 4
         self.driver = None
         self.config_data = {}
         self.analyzed_sites = []
-        
+
         # Common patterns for different content types
         self.NEWS_INDICATORS = [
             'news', 'article', 'post', 'story', 'item', 'entry', 'content',
             'feed', 'list', 'grid', 'card', 'tile', 'block'
         ]
-        
+
         self.CONTAINER_INDICATORS = [
             'container', 'wrapper', 'main', 'content', 'section', 'area',
             'zone', 'region', 'panel', 'box', 'frame'
         ]
-        
+
         self.TITLE_INDICATORS = [
             'title', 'headline', 'header', 'subject', 'name', 'caption'
         ]
-        
+
         self.DATE_INDICATORS = [
             'date', 'time', 'published', 'created', 'updated', 'ago',
             'timestamp', 'when', 'day', 'month', 'year'
         ]
-        
+
         self.FILE_PROVIDERS = [
             'rapidgator', 'mega', 'mediafire', 'dropbox', 'drive.google',
             'onedrive', 'box.com', 'sendspace', 'zippyshare', 'uploaded',
@@ -113,16 +114,16 @@ class ConfigGenerator:
                 'url': url,
                 'title': soup.title.get_text() if soup.title else '',
                 'main_container': self.find_main_container(soup),
-                'news_items': self.find_news_items(soup),
-                'pagination': self.detect_pagination(soup, url),
-                'detail_structure': self.analyze_detail_structure(soup),
-                'filters': self.detect_content_filters(soup)
+                # 'news_items': pass,
+                # 'pagination': pass,
+                # 'detail_structure': pass,
+                # 'filters': pass,
             }
             
             return analysis
             
         except Exception as e:
-            print(f"Error analyzing {url}: {e}")
+            print(f"{self.process_indent}Error analyzing {url}: {e}")
             return None
 
 
@@ -160,15 +161,16 @@ class ConfigGenerator:
         
         if candidates:
             best = max(candidates, key=lambda x: x['score'])
-            print(f"Found main container: {best['selector']} (score: {best['score']})")
+            print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
         
-        print("!!Using body as fallback container")
+        print(f"{self.process_indent}!!Using body as fallback container")
         return {'selector': 'body', 'class': '', 'id': ''}
 
     
     def generate_css_selector(self, element):
         """Generate a reliable CSS selector for an element"""
+        print(f"\n{self.process_indent}Generating CSS selector . . .")
         if element.get('id'):
             return f"#{element['id']}"
         
@@ -194,19 +196,19 @@ class ConfigGenerator:
         
         websites = []
         while True:
-            url = input(f"\nEnter website URL {len(websites)+1} (or ENTER to continue): ").strip()
+            url = input(f"\n{self.process_indent}Enter website URL {len(websites)+1} (or ENTER to continue): ").strip()
             if not url:
                 if websites:
                     break
                 else:
-                    print("Please enter at least one website URL")
+                    print(f"{self.process_indent}Please enter at least one website URL")
                     continue
             
             if not url.startswith(('http://', 'https://')):
                 url = 'https://' + url
             
             websites.append(url)
-            print(f"Added: {url}")
+            print(f"{self.process_indent}Added: {url}")
         
         # Setup browser
         self.setup_browser()
