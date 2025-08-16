@@ -126,6 +126,47 @@ class ConfigGenerator:
             return None
 
 
+    def find_main_container(self, soup):
+        """Find the main container holding all content items"""
+        print("Finding main content container...")
+        
+        candidates = []
+        
+        for tag in soup.find_all(['div', 'section', 'main', 'article']):
+            score = 0
+            classes = ' '.join(tag.get('class', [])).lower()
+            tag_id = tag.get('id', '').lower()
+            
+            for indicator in self.NEWS_INDICATORS + self.CONTAINER_INDICATORS:
+                if indicator in classes or indicator in tag_id:
+                    score += 10
+            
+            children = tag.find_all(['div', 'article', 'li'])
+            if 5 <= len(children) <= 100:
+                score += len(children)
+            
+            text_content = len(tag.get_text().strip())
+            if text_content > 500:
+                score += min(text_content // 100, 20)
+            
+            if score > 15:
+                candidates.append({
+                    'element': tag,
+                    'score': score,
+                    'selector': self.generate_css_selector(tag),
+                    'class': ' '.join(tag.get('class', [])),
+                    'id': tag.get('id', '')
+                })
+        
+        if candidates:
+            best = max(candidates, key=lambda x: x['score'])
+            print(f"Found main container: {best['selector']} (score: {best['score']})")
+            return best
+        
+        print("!!Using body as fallback container")
+        return {'selector': 'body', 'class': '', 'id': ''}
+
+    
     def generate_css_selector(self, element):
         """Generate a reliable CSS selector for an element"""
         if element.get('id'):
