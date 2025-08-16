@@ -338,17 +338,8 @@ class ConfigGenerator:
             text = element.get_text().strip()
             classes = ' '.join(element.get('class', [])).lower()
             
-            # print(f'DATE: {text}\n\n.....')
             for pattern in self.DATE_PATTERNS:
                 if re.search(pattern, text, re.IGNORECASE):
-                    print(
-                        f"""
-                        ^^^\n
-                        Pattern: {pattern}\n
-                        Text: {text}\n
-                        ^^^\n
-                        """
-                    )
                     return {
                         'tag': element.name,
                         'class': ' '.join(element.get('class', [])),
@@ -362,6 +353,32 @@ class ConfigGenerator:
                         'class': ' '.join(element.get('class', [])),
                         'selector': self.generate_css_selector(element)
                     }
+        
+        return None
+
+    
+    def find_link_in_item(self, item):
+        """Find the main link within a news item"""
+        links = item.find_all('a', href=True)
+        
+        for link in links:
+            href = link.get('href')
+            text = link.get_text().strip()
+            
+            if len(text) >= 20:
+                return {
+                    'tag': link.name,
+                    'selector': self.generate_css_selector(link),
+                    'href': href
+                }
+        
+        # Fallback: first link
+        if links:
+            return {
+                'tag': links[0].name,
+                'selector': self.generate_css_selector(links),
+                'href': links.get('href')
+            }
         
         return None
 
