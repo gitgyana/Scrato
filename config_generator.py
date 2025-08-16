@@ -186,6 +186,29 @@ class ConfigGenerator:
         return element.name
 
 
+    def looks_like_news_item(self, element):
+        """Determine if an element looks like a news item"""
+        if len(element.get_text().strip()) < 20:
+            return False
+        
+        if not element.find('a'):
+            return False
+        
+        text_length = len(element.get_text())
+        if text_length < 50 or text_length > 2000:
+            return False
+        
+        classes = ' '.join(element.get('class', [])).lower()
+        element_id = element.get('id', '').lower()
+        
+        score = 0
+        for indicator in self.NEWS_INDICATORS:
+            if indicator in classes or indicator in element_id:
+                score += 1
+        
+        return score > 0 or len(element.get_text()) > 100
+
+    
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
         print("AUTO-CONFIG GENERATOR")
