@@ -195,7 +195,10 @@ class ConfigGenerator:
         for tag_name in ['div', 'article', 'li', 'section']:
             elements = soup.find_all(tag_name)
             
-            
+            for element in elements:
+                if self.looks_like_news_item(element):
+                    classes = tuple(sorted(element.get('class', [])))
+                    item_candidates[classes].append(element)
 
 
 
