@@ -152,6 +152,17 @@ class ConfigGenerator:
         
         # Setup browser
         self.setup_browser()
+            
+        # Analyze each website
+        analyses = []
+        for i, url in enumerate(websites, 1):
+            print(f"\n{'='*20} ANALYSIS {i}/{len(websites)} {'='*20}")
+            analysis = self.analyze_website_structure(url)
+            if analysis:
+                analyses.append(analysis)
+                self.analyzed_sites.append(url)
+            
+            time.sleep(2)
 
 
 
