@@ -200,6 +200,12 @@ class ConfigGenerator:
                     classes = tuple(sorted(element.get('class', [])))
                     item_candidates[classes].append(element)
 
+        print(len(item_candidates))
+        a = '\n'.join(
+            f'{key}' for key in item_candidates.keys()
+        )
+        print(a)
+
 
 
     def looks_like_news_item(self, element):
