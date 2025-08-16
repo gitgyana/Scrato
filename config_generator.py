@@ -256,6 +256,34 @@ class ConfigGenerator:
         return score > 0 or len(element.get_text()) > 100
 
     
+    def find_title_in_item(self, item):
+        """Find the title element within a news item"""
+        links = item.find_all('a')
+        
+        for link in links:
+            text = link.get_text().strip()
+            if 20 <= len(text) <= 200:
+                return {
+                    'tag': link.name,
+                    'selector': self.generate_css_selector(link),
+                    'attribute': 'title' if link.get('title') else 'text',
+                    'href_attr': 'href'
+                }
+        
+        # Fallback
+        for tag in item.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+            text = tag.get_text().strip()
+            if 10 <= len(text) <= 200:
+                return {
+                    'tag': tag.name,
+                    'selector': self.generate_css_selector(tag),
+                    'attribute': 'text',
+                    'href_attr': 'href'
+                }
+        
+        return None
+
+
     def get_nearest_class(self, element, max_depth=3):
         depth = 0
         while element and depth < max_depth:
@@ -265,6 +293,7 @@ class ConfigGenerator:
             element = element.parent
             depth += 1
 
+        # Fallback
         return ()
 
 
