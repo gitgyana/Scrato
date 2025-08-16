@@ -22,6 +22,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup, NavigableString
 from datetime import datetime
+import driver_config
 
 class ConfigGenerator:
     def __init__(self):
@@ -160,6 +161,7 @@ class ConfigGenerator:
                 })
         
         if candidates:
+        	print(candidates)
             best = max(candidates, key=lambda x: x['score'])
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
@@ -170,7 +172,6 @@ class ConfigGenerator:
     
     def generate_css_selector(self, element):
         """Generate a reliable CSS selector for an element"""
-        print(f"\n{self.process_indent}Generating CSS selector . . .")
         if element.get('id'):
             return f"#{element['id']}"
         
