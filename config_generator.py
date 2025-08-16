@@ -39,8 +39,6 @@ class ConfigGenerator:
             r'^[0-3]?[0-9][./-][0-3]?[0-9][./-](?:\d{2})?\d{2}$',        # D.M.Y
             r'^(?:0[1-9]|1[0-2])[/-](?:0[1-9]|[12]\d|3[01])[/-]\d{4}$',  # strict MM/DD/YYYY
             r'^(?:0[1-9]|[12]\d|3[01])[/-](?:0[1-9]|1[0-2])[/-]\d{4}$',  # strict DD/MM/YYYY
-            r'\d{8}',    # YYYYMMDD
-            r'\d{6}',    # YYMMDD
         ]
         # Dates with Month Names (Short & Long)
         self.DATE_PATTERNS += [
@@ -273,6 +271,7 @@ class ConfigGenerator:
                 'selector': self.generate_css_selector(sample_element),
                 'count': len(elements),
                 'title_element': self.find_title_in_item(sample_element),
+                'date_element': self.find_date_in_item(sample_element),
             }
             
             print(f"{self.process_indent}Found {result['count']} news items: {result['selector']}")
@@ -339,8 +338,17 @@ class ConfigGenerator:
             text = element.get_text().strip()
             classes = ' '.join(element.get('class', [])).lower()
             
+            # print(f'DATE: {text}\n\n.....')
             for pattern in self.DATE_PATTERNS:
                 if re.search(pattern, text, re.IGNORECASE):
+                    print(
+                        f"""
+                        ^^^\n
+                        Pattern: {pattern}\n
+                        Text: {text}\n
+                        ^^^\n
+                        """
+                    )
                     return {
                         'tag': element.name,
                         'class': ' '.join(element.get('class', [])),
