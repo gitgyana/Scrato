@@ -31,6 +31,57 @@ class ConfigGenerator:
         self.config_data = {}
         self.analyzed_sites = []
 
+        # Possible date patterns
+        # Numeric Date Patterns (Flexible Formats)
+        self.date_patterns = [
+            r'\d{1,2}[/-]\d{1,2}[/-]\d{2,4}',    # MM/DD/YYYY or D/M/YY
+            r'\d{4}[/-]\d{1,2}[/-]\d{1,2}',      # YYYY/MM/DD
+            r'^[0-3]?[0-9][./-][0-3]?[0-9][./-](?:\d{2})?\d{2}$',        # D.M.Y
+            r'^(?:0[1-9]|1[0-2])[/-](?:0[1-9]|[12]\d|3[01])[/-]\d{4}$',  # strict MM/DD/YYYY
+            r'^(?:0[1-9]|[12]\d|3[01])[/-](?:0[1-9]|1[0-2])[/-]\d{4}$',  # strict DD/MM/YYYY
+            r'\d{8}',    # YYYYMMDD
+            r'\d{6}',    # YYMMDD
+        ]
+        # Dates with Month Names (Short & Long)
+        self.date_patterns += [
+            r'\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*,?\s*\d{2,4}',  # "10 Jan, 2025"
+            r'(Jan|Feb|...|Dec)\s+\d{1,2},?\s*\d{2,4}',                                     # "Jan 10, 2025"
+            r'\d{1,2}\s+(January|...|December)\s*,?\s*\d{2,4}',    # "10 January, 2025"
+            r'(January|...)\s+\d{1,2},?\s*\d{2,4}',                # "January 10, 2025"
+        ]
+        # Leap-Year Aware Patterns (DD/MM/YYYY with Checks)
+        self.date_patterns += [
+            r'^(?:(?:31([\/\-.])(?:0?[13578]|1[02]))\1|'
+            r'(?:(?:29|30)\1(?:0?[13-9]|1[0-2]))\1)'
+            r'(?:(?:1[6-9]|[2-9]\d)?\d{2})$|'
+            r'^(?:29([\/\-.])0?2\2'
+            r'(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26]))|'
+            r'(?:(?:16|[2468][048]|[3579][26])00)))$|'
+            r'^(?:0?[1-9]|1\d|2[0-8])([\/\-.])'
+            r'(?:(?:0?[1-9])|(?:1[0-2]))\3'
+            r'(?:(?:1[6-9]|[2-9]\d)?\d{2})$',
+        ]
+        # ISO 8601 & Timestamp Formats
+        self.date_patterns += [
+            r'^\d{4}-\d{2}-\d{2}$',                              # YYYY-MM-DD
+            r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',            # ISO datetime
+            r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?$',     # With milliseconds and optional Z
+        ]
+        # RFC 2822 & Ordinal Day Formats
+        self.date_patterns += [
+            r'^(Mon|Tue|...|Sun),\s\d{2}\s(?:Jan|...|Dec)\s\d{4}\s'
+            r'(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\s'
+            r'(?:[+-]\d{4}|UT|GMT)$',
+            r'\d{1,2}(st|nd|rd|th)\s+(Jan|...|Dec)\s+\d{4}',
+            r'(Jan|...|Dec)\s+\d{1,2}(st|nd|rd|th),\s+\d{4}',
+        ]
+        # Relative Dates & Simple Relative Words
+        self.date_patterns += [
+            r'\d+\s+(hours?|days?|weeks?|months?)\s+ago',
+            r'^(?:today|yesterday|tomorrow)$',
+            r'^(?:last|next)\s+(week|month|year)$',
+        ]
+
         # Common patterns for different content types
         self.NEWS_INDICATORS = [
             'news', 'article', 'post', 'story', 'item', 'entry', 'content',
@@ -261,7 +312,6 @@ class ConfigGenerator:
         for link in links:
             text = link.get_text().strip()
             if 20 <= len(text) <= 200:
-                print(link.get('title'))
                 return {
                     'tag': link.name,
                     'selector': self.generate_css_selector(link),
