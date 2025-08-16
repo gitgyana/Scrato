@@ -221,6 +221,7 @@ class ConfigGenerator:
                 'class': ' '.join(classes),
                 'selector': self.generate_css_selector(sample_element),
                 'count': len(elements),
+                'title_element': self.find_title_in_item(sample_element),
             }
             
             print(f"{self.process_indent}Found {result['count']} news items: {result['selector']}")
@@ -228,9 +229,6 @@ class ConfigGenerator:
         
         print(f"{self.process_indent}!! Could not detect consistent news item pattern")
         return None
-
-        
-
 
 
     def looks_like_news_item(self, element):
@@ -263,6 +261,7 @@ class ConfigGenerator:
         for link in links:
             text = link.get_text().strip()
             if 20 <= len(text) <= 200:
+                print(link.get('title'))
                 return {
                     'tag': link.name,
                     'selector': self.generate_css_selector(link),
