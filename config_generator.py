@@ -272,6 +272,7 @@ class ConfigGenerator:
                 'count': len(elements),
                 'title_element': self.find_title_in_item(sample_element),
                 'date_element': self.find_date_in_item(sample_element),
+                'link_element': self.find_link_in_item(sample_element)
             }
             
             print(f"{self.process_indent}Found {result['count']} news items: {result['selector']}")
@@ -365,6 +366,15 @@ class ConfigGenerator:
             href = link.get('href')
             text = link.get_text().strip()
             
+            print(
+                f"""
+                ^^^
+                tag: {link.name}\n
+                selector: {self.generate_css_selector(link)}\n
+                href: {href}
+                ^^^
+                """
+            )
             if len(text) >= 20:
                 return {
                     'tag': link.name,
