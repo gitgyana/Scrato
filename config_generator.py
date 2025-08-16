@@ -161,11 +161,6 @@ class ConfigGenerator:
                 })
         
         if candidates:
-            a = '\n'.join(
-                f"{c['score']}, {c['class']}, {c['id']}" for c in candidates
-            )
-
-            print(a)
             best = max(candidates, key=lambda x: x['score'])
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
