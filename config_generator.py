@@ -115,7 +115,7 @@ class ConfigGenerator:
                 'url': url,
                 'title': soup.title.get_text() if soup.title else '',
                 'main_container': self.find_main_container(soup),
-                # 'news_items': pass,
+                'news_items': self.find_news_items(soup),
                 # 'pagination': pass,
                 # 'detail_structure': pass,
                 # 'filters': pass,
