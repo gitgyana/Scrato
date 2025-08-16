@@ -99,35 +99,61 @@ class ConfigGenerator:
         print("Browser ready for intelligent analysis\n")
 
 
+    def analyze_website_structure(self, url):
+        """Analyze website structure and identify key elements"""
+        print(f"\nAnalyzing website structure: {url}")
+        
+        try:
+            self.driver.get(url)
+            time.sleep(3)
+            
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            
+            analysis = {
+                'url': url,
+                'title': soup.title.get_text() if soup.title else '',
+                'main_container': self.find_main_container(soup),
+                'news_items': self.find_news_items(soup),
+                'pagination': self.detect_pagination(soup, url),
+                'detail_structure': self.analyze_detail_structure(soup),
+                'filters': self.detect_content_filters(soup)
+            }
+            
+            return analysis
+            
+        except Exception as e:
+            print(f"Error analyzing {url}: {e}")
+            return None
+
+
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
-        try:
-            print("AUTO-CONFIG GENERATOR")
-            print("="*50)
-            print("This tool will automatically analyze your website(s)")
-            print("and create an optimal scraping configuration.")
-            print("Just provide website URLs and we'll handle the rest.")
+        print("AUTO-CONFIG GENERATOR")
+        print("="*50)
+        print("This tool will automatically analyze your website(s)")
+        print("and create an optimal scraping configuration.")
+        print("Just provide website URLs and we'll handle the rest.")
+        
+        websites = []
+        while True:
+            url = input(f"\nEnter website URL {len(websites)+1} (or ENTER to continue): ").strip()
+            if not url:
+                if websites:
+                    break
+                else:
+                    print("Please enter at least one website URL")
+                    continue
             
-            websites = []
-            while True:
-                url = input(f"\nEnter website URL {len(websites)+1} (or ENTER to continue): ").strip()
-                if not url:
-                    if websites:
-                        break
-                    else:
-                        print("Please enter at least one website URL")
-                        continue
-                
-                if not url.startswith(('http://', 'https://')):
-                    url = 'https://' + url
-                
-                websites.append(url)
-                print(f"Added: {url}")
+            if not url.startswith(('http://', 'https://')):
+                url = 'https://' + url
             
-            # Setup browser
-            self.setup_browser()
+            websites.append(url)
+            print(f"Added: {url}")
+        
+        # Setup browser
+        self.setup_browser()
 
-            
+
 
 if __name__ == "__main__":
     try:
