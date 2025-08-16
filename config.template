@@ -1,5 +1,6 @@
 # config.py
 from datetime import datetime
+import os
 
 # CSS classes and element identifiers for scraping
 PARENT_DIV_CLASS = "category_news_phai_chinh"
@@ -18,38 +19,36 @@ DETAIL_IMAGE1_DIV_CLASS = "fisrst_sc"
 DETAIL_IMAGE1_IMG_TAG = "img"
 DETAIL_IMAGE2_DIV_CLASS = "Recipepod"
 
-# File size prefix in text extraction
+# File size prefix used during file info extraction
 FILE_SIZE_PREFIX = "File size:"
 
-# Providers for filtering download/file links
+# File host providers to filter download links
 FILE_PROVIDERS = ["source1", "source2", "source3", "source4"]
 
-# Title filtering criteria
+# Filtering conditions for titles
 TITLE_FILTER_INCLUDE = "[NEW]"
 TITLE_FILTER_EXCLUDE = "AD"
 
-# Target websites for scraping (pagination placeholder | PAGENO |)
+# Websites to scrape, with pagination placeholder | PAGENO |
 WEBSITE = "https://example.com/news-page-| PAGENO |.html#gsc.tab=0"
 WEBSITES = [
     "https://example.com/news-page-| PAGENO |.html#gsc.tab=0",
     "https://example.com/headline-page-| PAGENO |.html#gsc.tab=0",
-    # Add more URLs as needed...
+    # More URLs can be added here
 ]
 
-# Output timestamp for files and logs
+# Timestamps for naming and versioning
 OUTPUT_DATETIME = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+REFINE_DT = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# Cleaned datetime for DB default values or identifiers
-REFINE_DT = OUTPUT_DATETIME.replace('.', '').replace(':', '').replace(' ', '').replace('-', '').replace('_', '')
-
-# End date filter for scraping or processing
+# Scraping/processing filter: stop after this end date
 END_DATE = "2025.08"
 
-# Database config
+# SQLite database configuration
 DATABASE = 'database.db'
 TABLE_NAME = 'table_0'
 
-# Database fields & primary keys
+# Fields used in database and CSV
 FIELDNAMES = [
     "date",
     "site",
@@ -63,12 +62,40 @@ FIELDNAMES = [
     "process_dt",
 ]
 
+# Primary key fields for deduplication or constraints
 PRIMARY_KEYS = ["date", "filename"]
 
-# SQL Table creation header string for SQLite or similar
+# Default values for SQL table creation
+DEFAULT_FILENAME = f"FILE_{REFINE_DT}"
+DEFAULT_DATE = f'"{datetime.now().strftime("%Y.%m.%d")}"'
+
+# SQL CREATE TABLE string
 TABLE_HEADER = ', '.join(
-    f"{col} TEXT NOT NULL DEFAULT FILE_{REFINE_DT}" if col == 'filename'
-    else f"{col} TEXT NOT NULL DEFAULT {REFINE_DT}" if col == 'date'
+    f"{col} TEXT NOT NULL DEFAULT {DEFAULT_FILENAME}" if col == 'filename'
+    else f"{col} TEXT NOT NULL DEFAULT {DEFAULT_DATE}" if col == 'date'
     else f"{col} TEXT"
     for col in FIELDNAMES
 ) + f", PRIMARY KEY ({', '.join(PRIMARY_KEYS)})"
+
+# Path for saving CSV output
+formatted_ym = datetime.now().strftime("%Y.%m")
+CSV_FILE = os.path.join("Outputs", formatted_ym, f"news_output_{OUTPUT_DATETIME}.csv")
+
+# Directory for logs
+LOG_DIR = "Logs"
+
+# Data row template (used for inserting into DB or CSV)
+ROW_HARDCODE = """
+{
+    "date": date,
+    "site": site,
+    "title": title,
+    "href": href,
+    "image1": image1,
+    "image2": image2,
+    "filename": filename,
+    "size": size,
+    "fileurl": fileurl,
+    "process_dt": process_dt,
+}
+"""
