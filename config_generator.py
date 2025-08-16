@@ -202,7 +202,8 @@ class ConfigGenerator:
 
         print(len(item_candidates))
         a = '\n'.join(
-            f'{key}' for key in item_candidates.keys()
+            f'{key}: {len(values)}' if len(values) < 4 else f'{values}'
+            for key, values in item_candidates.items()
         )
         print(a)
 
