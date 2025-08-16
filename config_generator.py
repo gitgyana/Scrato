@@ -198,11 +198,14 @@ class ConfigGenerator:
             for element in elements:
                 if self.looks_like_news_item(element):
                     classes = tuple(sorted(element.get('class', [])))
+                    if not classes:
+                        classes = self.get_nearest_class(element)
+
                     item_candidates[classes].append(element)
 
         print(len(item_candidates))
         a = '\n'.join(
-            f'{key}: {len(values)}' if len(values) < 4 else f'{values}'
+            f'{key}: {values[0].name}' # if len(values) < 4 else f'{values[0]}'
             for key, values in item_candidates.items()
         )
         print(a)
@@ -232,6 +235,18 @@ class ConfigGenerator:
         return score > 0 or len(element.get_text()) > 100
 
     
+    def get_nearest_class(self, element, max_depth=3):
+        depth = 0
+        while element and depth < max_depth:
+            classes = element.get('class', [])
+            if classes:
+                return tuple(sorted(classes))
+            element = element.parent
+            depth += 1
+
+        return ()
+
+
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
         print("AUTO-CONFIG GENERATOR")
