@@ -126,6 +126,23 @@ class ConfigGenerator:
             return None
 
 
+    def generate_css_selector(self, element):
+        """Generate a reliable CSS selector for an element"""
+        if element.get('id'):
+            return f"#{element['id']}"
+        
+        classes = element.get('class', [])
+        if classes:
+            for cls in classes:
+                if len(cls) > 2 and not cls.startswith(('col-', 'row-', 'pull-', 'push-')):
+                    return f".{cls}"
+        
+        if classes:
+            return f"{element.name}.{classes[0]}"
+        
+        return element.name
+
+
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
         print("AUTO-CONFIG GENERATOR")
