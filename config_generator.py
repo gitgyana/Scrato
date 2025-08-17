@@ -513,6 +513,7 @@ class ConfigGenerator:
         
         detail_structure = {
             'main_content': self.find_main_container(soup),
+            'file_links': self.find_file_download_links(soup)
         }
 
         detail_structure['images'] = self.find_detail_images(
@@ -521,6 +522,23 @@ class ConfigGenerator:
         )
         
         return detail_structure
+
+    
+    def find_file_download_links(self, soup):
+        """Find file download links"""
+        download_links = []
+        
+        for i, link in enumerate(soup.find_all('a', href=True)):
+            href = link.get('href').lower()
+            
+            for provider in self.FILE_PROVIDERS:
+                if provider in href and provider not in download_links:
+                    download_links.append(provider)
+                    break
+        
+        # Test
+        print(download_links)
+        return download_links
 
     
     def find_detail_images(self, soup, main_selector):
@@ -542,13 +560,6 @@ class ConfigGenerator:
                     })
 
         image_containers.sort(key=lambda x: x['image_count'])
-
-        # Test
-        for d in image_containers:
-            print(f"selector: {d['selector']}")
-            print(f"class: {d['class']}")
-            print(f"image_count: {d['image_count']}")
-            print("-" * 60)
 
         return image_containers[:2]
 
