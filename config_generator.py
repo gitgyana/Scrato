@@ -24,6 +24,7 @@ from bs4 import BeautifulSoup, NavigableString
 from datetime import datetime
 import driver_config
 
+
 class ConfigGenerator:
     def __init__(self):
         self.process_indent = ' ' * 4
@@ -233,8 +234,7 @@ class ConfigGenerator:
 
         if candidates:
             candidates.sort(key=lambda x: x['score'], reverse=True)
-            for c in candidates:
-                print(f"{c['selector']}: {c['score']}")
+            
             best = candidates[0]
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
@@ -453,7 +453,6 @@ class ConfigGenerator:
                 url1 = page_numbers[0][1]
                 url2 = page_numbers[1][1]
                 
-                print(url, '\n', url1, '\n', url2, '\n')
                 pattern = self.extract_pagination_pattern(url, url1, url2)
                 if pattern:
                     print(f"{self.process_indent}'pattern': {pattern}, 'max_detected': {max(p[0] for p in page_numbers)}")
@@ -618,7 +617,6 @@ class ConfigGenerator:
         primary = analyses[0]
         
         config = self.build_config_from_analysis(primary)
-        print(json.dumps(config, indent=6))
         
         print(f"{self.process_indent}Adaptive configuration created successfully!")
 
