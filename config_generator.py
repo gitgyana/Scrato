@@ -617,6 +617,8 @@ class ConfigGenerator:
         primary = analyses[0]
         
         config = self.build_config_from_analysis(primary)
+        print(json.dumps(primary, indent=6))
+        print(json.dumps(config, indent=6))
         
         print(f"{self.process_indent}Adaptive configuration created successfully!")
 
