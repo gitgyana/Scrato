@@ -233,11 +233,6 @@ class ConfigGenerator:
 
         if candidates:
             candidates.sort(key=lambda x: x['score'], reverse=True)
-
-            # Test
-            for c in candidates:
-                print(f"Candidate: {c['selector']} (score: {c['score']})")
-
             best = candidates[0]
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
