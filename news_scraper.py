@@ -33,7 +33,7 @@ import driver_config
 
 existing_records = 0
 successful_records = 0
-current_pdate = None
+update_site = False
 
 log_dir = os.path.join(config.LOG_DIR, datetime.now().strftime("%Y.%m"))
 os.makedirs(log_dir, exist_ok=True)
@@ -295,7 +295,7 @@ def browser(site=None):
 
     global existing_records
     global successful_records
-    global current_pdate
+    global update_site
 
     now = datetime.now()
     formatted_ym = now.strftime("%Y.%m")
@@ -342,15 +342,12 @@ def browser(site=None):
     detail_driver = create_driver(chromedriver_path, driver_config)
     
     for li in news_section.find_all(config.NEWS_ITEM_LI_TAG):
-        if existing_records > 50:
-            log("warning", "Exceeded 50 continuous old records.")
-            break
-
         title_tag = li.find(config.TITLE_A_TAG, title=True)
         title = title_tag[config.TITLE_A_TITLE_ATTR].strip() if title_tag else ""
         href = title_tag[config.TITLE_A_HREF_ATTR].strip() if title_tag else ""
         date_span = li.find("span", class_=config.NEWS_DATE_CLASS)
         date = date_span.get_text(strip=True).replace("/", ".") if date_span else ""
+        
         if date:
             try:
                 date = datetime.strptime(date, "%d.%m.%Y").strftime("%Y.%m.%d")
@@ -359,6 +356,7 @@ def browser(site=None):
 
         if config.END_DATE in date:
             log("warning", "Encounted terminate date.")
+            update_site = True
             break
 
         if config.TITLE_FILTER_INCLUDE not in title:
@@ -403,12 +401,21 @@ def browser(site=None):
         try:
             row = {field: locals()[field] for field in config.FIELDNAMES}
         except Exception as e:
-            log("error", f"{str(e)}. Using hardcode")
-            row = eval(config.ROW_HARDCODE)
-            log(
-                "info", 
-                "Hardcode data: {" + ", ".join(f"{key}: {value}" for key, value in row.items()) + "}"
-            )
+            try:
+                row = eval(config.ROW_HARDCODE)
+                log(
+                    "info",
+                    (
+                        f"Issue with {str(e)}. Using Hardcode: {{"
+                        + ", ".join(
+                            f"{key}: {value}" if len(value) < 20 else f"{key}: {value[:20]}..."
+                            for key, value in row.items()
+                        )
+                        + "}"
+                    )
+                )
+            except Exception as e1:
+                log("error", f"Unknown error in row hardcode")
 
         database_op(
             data = row, 
@@ -433,16 +440,22 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
-    page_no_81 = 3000
-    page_no_116 = 110
-    while True:
-        for page_no in range(1, page_no_116):
-            site = config.WEBSITES[1].replace("| PAGENO |", str(page_no))
-            log("info", site)
-            browser(site)
+    page_flip = 0
+    page_no = 1
 
-        for page_no in range(1, page_no_81):
-            site = config.WEBSITES[0].replace("| PAGENO |", str(page_no))
-            log("info", site)
-            browser(site)
+    while True:
+        if page_no == 1:
+            site = config.DEFAULT_WEBSITES[page_flip]
+        else:
+            site = config.WEBSITES[page_flip].replace("| PAGENO |", str(page_no))
+
+        log("info", site)
+        browser(site)
+
+        if update_site:
+            page_flip = 1 - page_flip
+            update_site = False
+            page_no = 1
+        else:
+            page_no += 1
 
