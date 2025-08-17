@@ -106,6 +106,9 @@ class ConfigGenerator:
             'turbobit', 'nitroflare', 'keep2share', 'k2s', 'subyshare'
         ]
 
+        # Common exclude patterns for filtering
+        self.EXCLUDE_WORDS = ['ad', 'ads', 'sponsored', 'promo', 'advertisement']
+
 
     def setup_browser(self):
         """Initialize browser for analysis"""
@@ -166,16 +169,11 @@ class ConfigGenerator:
                 'main_container': self.find_main_container(soup),
                 'news_items': self.find_news_items(soup),
                 'pagination': self.detect_pagination(soup, url),
+                'filters': self.detect_content_filters(soup),
             }
-            print(
-                f"""
-{list(analysis.keys())[0]}: {analysis['url']} \n
-{list(analysis.keys())[1]}: {analysis['title']} \n
-{list(analysis.keys())[2]}: {[str(v)[:51] for v in analysis['main_container'].values()]} \n
-{list(analysis.keys())[3]}: {[str(v)[:51] for v in analysis['news_items'].values()]} \n
-{list(analysis.keys())[4]}: {[str(v)[:51] for v in analysis['pagination'].values()]} \n
-                """
-            )
+
+            print(analysis['filters'])
+            
             return analysis
             
         except Exception as e:
@@ -461,6 +459,43 @@ class ConfigGenerator:
             print(f"{self.process_indent}!!Unable to extract pagination pattern")
         
         return None
+
+    
+    def detect_content_filters(self, soup):
+        """Automatically detect content filtering patterns"""
+        print("Detecting content filters...")
+        
+        titles = []
+        for link in soup.find_all('a'):
+            text = link.get_text().strip()
+            if 20 <= len(text) <= 200:
+                titles.append(text)
+        
+        bracket_patterns = []
+        for title in titles:
+            matches = re.findall(r'\[([^\]]+)\]', title)
+            bracket_patterns.extend(matches)
+        
+        pattern_counts = Counter(bracket_patterns)
+        
+        filters = {
+            'include_patterns': [],
+            'exclude_patterns': []
+        }
+        
+        if pattern_counts:
+            most_common = pattern_counts.most_common(3)
+            for pattern, count in most_common:
+                if count >= 2:
+                    filters['include_patterns'].append(f'[{pattern}]')
+        
+        for title in titles:
+            for word in self.EXCLUDE_WORDS:
+                if word.lower() in title.lower():
+                    filters['exclude_patterns'].append(word.upper())
+                    break
+        
+        return filters
 
     
     def run_auto_generator(self):
