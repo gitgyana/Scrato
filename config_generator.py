@@ -172,7 +172,15 @@ class ConfigGenerator:
                 'filters': self.detect_content_filters(soup),
             }
 
+            url = analysis['news_items']['link_element']['href']
+            
+            self.driver.get(url)
+            time.sleep(3)
+            
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
 
+            analysis['detail_structure'] = self.analyze_detail_structure(soup)
+            
             return analysis
             
         except Exception as e:
@@ -497,6 +505,79 @@ class ConfigGenerator:
         print(f"{self.process_indent}Include: {filters['include_patterns']}")
         print(f"{self.process_indent}Exclude: {filters['exclude_patterns']}")
         return filters
+
+    
+    def analyze_detail_structure(self, soup):
+        """Analyze structure of detail pages (for articles)"""
+        print("Analyzing detail page structure...")
+        
+        detail_structure = {
+            'main_content': self.find_main_container(soup),
+        }
+
+        detail_structure['images'] = self.find_detail_images(
+            soup=soup, 
+            main_selector= detail_structure['main_content']['selector']
+        )
+        
+        return detail_structure
+
+    
+    def find_detail_images(self, soup, main_selector):
+        """Find image containers inside a specified main container"""
+        image_containers = []
+
+        main_block = soup.select_one(main_selector) if main_selector else soup
+
+        for div in main_block.find_all('div'):
+            images = div.find_all('img', src=True)
+            if images:
+                large_images = [img for img in images if self.is_content_image(img)]
+
+                if 0 < len(large_images) <= 5:
+                    image_containers.append({
+                        'selector': self.generate_css_selector(div),
+                        'class': ' '.join(div.get('class', [])),
+                        'image_count': len(large_images)
+                    })
+
+        image_containers.sort(key=lambda x: x['image_count'])
+
+        # Test
+        for d in image_containers:
+            print(f"selector: {d['selector']}")
+            print(f"class: {d['class']}")
+            print(f"image_count: {d['image_count']}")
+            print("-" * 60)
+
+        return image_containers[:2]
+
+    
+    def is_content_image(self, img):
+        """Determine if an image is likely content (not ad/icon)"""
+        src = img.get('src', '')
+        alt = img.get('alt', '').lower()
+        
+        skip_indicators = ['icon', 'logo', 'avatar', 'thumb', 'small', 'ad', 'banner']
+        for indicator in skip_indicators:
+            if indicator in src.lower() or indicator in alt:
+                return False
+        
+        width = img.get('width')
+        height = img.get('height')
+        
+        if width and height:
+            try:
+                w, h = int(width), int(height)
+                if w < 100 or h < 100:
+                    return False
+                if w > 1000 or h > 1000:
+                    return True
+            except ValueError:
+                pass
+        
+        # Default
+        return True
 
     
     def run_auto_generator(self):
