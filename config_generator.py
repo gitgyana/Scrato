@@ -165,9 +165,6 @@ class ConfigGenerator:
                 'title': soup.title.get_text() if soup.title else '',
                 'main_container': self.find_main_container(soup),
                 'news_items': self.find_news_items(soup),
-                # 'pagination': pass,
-                # 'detail_structure': pass,
-                # 'filters': pass,
             }
             
             return analysis
@@ -366,15 +363,6 @@ class ConfigGenerator:
             href = link.get('href')
             text = link.get_text().strip()
             
-            print(
-                f"""
-                ^^^
-                tag: {link.name}\n
-                selector: {self.generate_css_selector(link)}\n
-                href: {href}
-                ^^^
-                """
-            )
             if len(text) >= 20:
                 return {
                     'tag': link.name,
@@ -406,6 +394,66 @@ class ConfigGenerator:
         return ()
 
 
+    def detect_pagination(self, soup, url):
+        """Detect pagination patterns"""
+        print("Detecting pagination...")
+        
+        pagination_indicators = ['page', 'next', 'prev', 'more', 'load']
+        pagination_elements = []
+        
+        for element in soup.find_all(['a', 'button', 'span']):
+            text = element.get_text().lower().strip()
+            classes = ' '.join(element.get('class', [])).lower()
+            href = element.get('href', '')
+            
+            for indicator in pagination_indicators:
+                if indicator in text or indicator in classes:
+                    pagination_elements.append(element)
+                    break
+        
+        page_numbers = []
+        for element in soup.find_all('a', href=True):
+            href = element.get('href')
+            text = element.get_text().strip()
+            
+            if text.isdigit() and int(text) > 1:
+                page_numbers.append((int(text), href))
+        
+        if page_numbers:
+            page_numbers.sort()
+            if len(page_numbers) >= 2:
+                url1 = page_numbers[0][1]
+                url2 = page_numbers[1][1]
+                
+                pattern = self.extract_pagination_pattern(url, url1, url2)
+                if pattern:
+                    print(f"{self.process_indent}Detected pagination pattern: {pattern}")
+                    return {'pattern': pattern, 'max_detected': max(p[0] for p in page_numbers)}
+        
+        print(f"{self.process_indent}No clear pagination pattern detected")
+        return None
+
+    
+    def extract_pagination_pattern(self, base_url, url1, url2):
+        """Extract pagination pattern from URLs"""
+        try:
+            url1 = urljoin(base_url, url1)
+            url2 = urljoin(base_url, url2)
+            
+            for i, (c1, c2) in enumerate(zip(url1, url2)):
+                if c1 != c2:
+                    for j in range(i, min(len(url1), len(url2))):
+                        if url1[j] == url2[j]:
+                            return url1[:i] + "| PAGENO |" + url1[j:]
+                    
+                    return url1[:i] + "| PAGENO |" + url1[min(len(url1), len(url2)):]
+                    
+        except:
+            print(f"{self.process_indent}!!Unable to extract pagination pattern")
+        
+        return None
+
+    
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
         print("AUTO-CONFIG GENERATOR")
