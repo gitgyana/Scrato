@@ -165,6 +165,7 @@ class ConfigGenerator:
                 'title': soup.title.get_text() if soup.title else '',
                 'main_container': self.find_main_container(soup),
                 'news_items': self.find_news_items(soup),
+                'pagination': self.detect_pagination(soup, url),
             }
             
             return analysis
@@ -426,8 +427,10 @@ class ConfigGenerator:
                 url2 = page_numbers[1][1]
                 
                 pattern = self.extract_pagination_pattern(url, url1, url2)
+                print(pattern)
                 if pattern:
                     print(f"{self.process_indent}Detected pagination pattern: {pattern}")
+                    print(f"'pattern': {pattern}, 'max_detected': {max(p[0] for p in page_numbers)}")
                     return {'pattern': pattern, 'max_detected': max(p[0] for p in page_numbers)}
         
         print(f"{self.process_indent}No clear pagination pattern detected")
@@ -447,7 +450,7 @@ class ConfigGenerator:
                             return url1[:i] + "| PAGENO |" + url1[j:]
                     
                     return url1[:i] + "| PAGENO |" + url1[min(len(url1), len(url2)):]
-                    
+
         except:
             print(f"{self.process_indent}!!Unable to extract pagination pattern")
         
