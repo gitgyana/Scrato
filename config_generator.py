@@ -190,46 +190,62 @@ class ConfigGenerator:
 
 
     def find_main_container(self, soup):
-        """Find the main container holding all content items"""
+        """Find the best main container closer to actual content blocks."""
         print("Finding main content container...")
-        
+
         candidates = []
-        
+        UI_EXCLUDE_PATTERNS = [
+            'gsc-', 'datepicker', 'stickymenu', 'header', 'search', 'menu', 'banner', 'slick', 'widget'
+        ]
+
         for tag in soup.find_all(['div', 'section', 'main', 'article']):
             score = 0
-            classes = ' '.join(tag.get('class', [])).lower()
+            tag_classes = ' '.join(tag.get('class', [])).lower()
             tag_id = tag.get('id', '').lower()
-            
+
+            if any(pat in tag_classes or pat in tag_id for pat in UI_EXCLUDE_PATTERNS):
+                continue
+
             for indicator in self.NEWS_INDICATORS + self.CONTAINER_INDICATORS:
-                if indicator in classes or indicator in tag_id:
+                if indicator in tag_classes or indicator in tag_id:
                     score += 10
-            
-            children = tag.find_all(['div', 'article', 'li'])
-            if 5 <= len(children) <= 100:
-                score += len(children)
-            
-            text_content = len(tag.get_text().strip())
-            if text_content > 500:
-                score += min(text_content // 100, 20)
-            
-            if score > 15:
+
+            direct_children = tag.find_all(recursive=False)
+            content_children = [c for c in direct_children if c.name in ['li', 'article', 'div', 'section']]
+            if len(content_children) >= 3:
+                score += len(content_children) * 2
+
+            text_length = len(tag.get_text(strip=True))
+            if 300 <= text_length <= 8000:
+                score += min(text_length // 200, 10)
+
+            depth = len(list(tag.parents))
+            score += max(0, 10 - depth)
+
+            if score > 10:
                 candidates.append({
                     'element': tag.name,
                     'score': score,
                     'selector': self.generate_css_selector(tag),
-                    'class': ' '.join(tag.get('class', [])),
-                    'id': tag.get('id', '')
+                    'class': tag_classes,
+                    'id': tag_id
                 })
-        
+
         if candidates:
-            best = max(candidates, key=lambda x: x['score'])
+            candidates.sort(key=lambda x: x['score'], reverse=True)
+
+            # Test
+            for c in candidates:
+                print(f"Candidate: {c['selector']} (score: {c['score']})")
+
+            best = candidates[0]
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
-        
+
         print(f"{self.process_indent}!!Using body as fallback container")
         return {'selector': 'body', 'class': '', 'id': ''}
 
-    
+
     def generate_css_selector(self, element):
         """Generate a reliable CSS selector for an element"""
         if element.get('id'):
