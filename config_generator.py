@@ -167,7 +167,15 @@ class ConfigGenerator:
                 'news_items': self.find_news_items(soup),
                 'pagination': self.detect_pagination(soup, url),
             }
-            
+            print(
+                f"""
+{list(analysis.keys())[0]}: {analysis['url']} \n
+{list(analysis.keys())[1]}: {analysis['title']} \n
+{list(analysis.keys())[2]}: {[str(v)[:51] for v in analysis['main_container'].values()]} \n
+{list(analysis.keys())[3]}: {[str(v)[:51] for v in analysis['news_items'].values()]} \n
+{list(analysis.keys())[4]}: {[str(v)[:51] for v in analysis['pagination'].values()]} \n
+                """
+            )
             return analysis
             
         except Exception as e:
@@ -427,10 +435,8 @@ class ConfigGenerator:
                 url2 = page_numbers[1][1]
                 
                 pattern = self.extract_pagination_pattern(url, url1, url2)
-                print(pattern)
                 if pattern:
-                    print(f"{self.process_indent}Detected pagination pattern: {pattern}")
-                    print(f"'pattern': {pattern}, 'max_detected': {max(p[0] for p in page_numbers)}")
+                    print(f"{self.process_indent}'pattern': {pattern}, 'max_detected': {max(p[0] for p in page_numbers)}")
                     return {'pattern': pattern, 'max_detected': max(p[0] for p in page_numbers)}
         
         print(f"{self.process_indent}No clear pagination pattern detected")
