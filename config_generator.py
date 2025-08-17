@@ -172,8 +172,7 @@ class ConfigGenerator:
                 'filters': self.detect_content_filters(soup),
             }
 
-            print(analysis['filters'])
-            
+
             return analysis
             
         except Exception as e:
@@ -494,7 +493,9 @@ class ConfigGenerator:
                 if word.lower() in title.lower():
                     filters['exclude_patterns'].append(word.upper())
                     break
-        
+
+        print(f"{self.process_indent}Include: {filters['include_patterns']}")
+        print(f"{self.process_indent}Exclude: {filters['exclude_patterns']}")
         return filters
 
     
