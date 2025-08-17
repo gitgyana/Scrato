@@ -30,6 +30,7 @@ class ConfigGenerator:
         self.driver = None
         self.config_data = {}
         self.analyzed_sites = []
+        self.site_load_delay = 0.5
 
         # Possible date patterns
         # Numeric Date Patterns (Flexible Formats)
@@ -159,7 +160,7 @@ class ConfigGenerator:
         
         try:
             self.driver.get(url)
-            time.sleep(3)
+            time.sleep(self.site_load_delay)
             
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
             
@@ -175,7 +176,7 @@ class ConfigGenerator:
             url = analysis['news_items']['link_element']['href']
             
             self.driver.get(url)
-            time.sleep(3)
+            time.sleep(self.site_load_delay)
             
             soup = BeautifulSoup(self.driver.page_source, 'html.parser')
 
@@ -213,7 +214,7 @@ class ConfigGenerator:
             
             if score > 15:
                 candidates.append({
-                    'element': tag,
+                    'element': tag.name,
                     'score': score,
                     'selector': self.generate_css_selector(tag),
                     'class': ' '.join(tag.get('class', [])),
@@ -536,8 +537,6 @@ class ConfigGenerator:
                     download_links.append(provider)
                     break
         
-        # Test
-        print(download_links)
         return download_links
 
     
@@ -591,44 +590,137 @@ class ConfigGenerator:
         return True
 
     
+    def create_adaptive_config(self, analyses):
+        """Create configuration that adapts to analyzed websites"""
+        print("\nCreating adaptive configuration...")
+        
+        if not analyses:
+            print(f"\n{self.process_indent}!!No successful analyses to work with")
+            return
+        
+        primary = analyses[0]
+        
+        config = self.build_config_from_analysis(primary)
+        print(json.dumps(primary, indent=6))
+        
+        print(f"{self.process_indent}Adaptive configuration created successfully!")
+
+
+    def build_config_from_analysis(self, analysis):
+        """Build config dictionary from analysis results"""
+        config = {
+            'analyzed_url': analysis['url'],
+            'analysis_date': datetime.now().isoformat(),
+        }
+        
+        # Main container
+        if analysis['main_container']:
+            config['parent_div_class'] = analysis['main_container']['class']
+        
+        # News items
+        if analysis['news_items']:
+            items = analysis['news_items']
+            config['news_item_tag'] = items['tag']
+            config['news_item_class'] = items['class']
+            
+            if items['title_element']:
+                title = items['title_element']
+                config['title_tag'] = title['tag']
+                config['title_selector'] = title['selector']
+                config['title_attribute'] = title['attribute']
+                config['href_attribute'] = title.get('href_attr', 'href')
+            
+            if items['date_element']:
+                date = items['date_element']
+                config['date_class'] = date['class']
+                config['date_selector'] = date['selector']
+
+            if items['link_element']:
+                link = items['link_element']
+                config['link_tag'] = link['tag']
+                config['link_selector'] = link['selector']
+        
+        # Pagination
+        if analysis['pagination']:
+            config['pagination_pattern'] = analysis['pagination']['pattern']
+        
+        # Filters
+        if analysis['filters']:
+            filters = analysis['filters']
+            config['include_filters'] = analysis['filters']['include_patterns']
+            config['exclude_filters'] = analysis['filters']['exclude_patterns']
+        
+        # Detail/Post page structure
+        if analysis['detail_structure']:
+            detail = analysis['detail_structure']
+            config['detail_content_selector'] = detail['main_content']
+            
+            if detail['images']:
+                config['image_containers'] = detail['images']
+            
+            if detail['file_links']:
+                config['file_providers'] = detail['file_links']
+        
+        return config
+    
+
     def run_auto_generator(self):
         """Main entry point for automatic config generation"""
-        print("AUTO-CONFIG GENERATOR")
-        print("="*50)
-        print("This tool will automatically analyze your website(s)")
-        print("and create an optimal scraping configuration.")
-        print("Just provide website URLs and we'll handle the rest.")
-        
-        websites = []
-        while True:
-            url = input(f"\n{self.process_indent}Enter website URL {len(websites)+1} (or ENTER to continue): ").strip()
-            if not url:
-                if websites:
-                    break
+        try:
+            print("AUTO-CONFIG GENERATOR")
+            print("="*50)
+            print("This tool will automatically analyze your website(s)")
+            print("and create an optimal scraping configuration.")
+            print("Just provide website URLs and we'll handle the rest.")
+            
+            websites = []
+            while True:
+                url = input(f"\n{self.process_indent}Enter website URL {len(websites)+1} (or ENTER to continue): ").strip()
+                if not url:
+                    if websites:
+                        break
+                    else:
+                        print(f"{self.process_indent}Please enter at least one website URL")
+                        continue
+                
+                if not url.startswith(('http://', 'https://')):
+                    url = 'https://' + url
+                
+                websites.append(url)
+                print(f"{self.process_indent}Added: {url}")
+            
+            # Setup browser
+            self.setup_browser()
+                
+            # Analyze each website
+            analyses = []
+            for i, url in enumerate(websites, 1):
+                print(f"\n{'='*20} ANALYSIS {i}/{len(websites)} {'='*20}")
+                analysis = self.analyze_website_structure(url)
+                if analysis:
+                    analyses.append(analysis)
+                    self.analyzed_sites.append(url)
+                
+                time.sleep(0)
+                
+                # Create adaptive config
+                if analyses:
+                    self.create_adaptive_config(analyses)
+                    
+                    print(f"\nSUCCESS!")
+                    print(f"Analyzed {len(analyses)} website(s)")
                 else:
-                    print(f"{self.process_indent}Please enter at least one website URL")
-                    continue
-            
-            if not url.startswith(('http://', 'https://')):
-                url = 'https://' + url
-            
-            websites.append(url)
-            print(f"{self.process_indent}Added: {url}")
+                    print("\n!!Could not analyze any websites successfully")
+                    print("Please check the URLs and try again")
         
-        # Setup browser
-        self.setup_browser()
-            
-        # Analyze each website
-        analyses = []
-        for i, url in enumerate(websites, 1):
-            print(f"\n{'='*20} ANALYSIS {i}/{len(websites)} {'='*20}")
-            analysis = self.analyze_website_structure(url)
-            if analysis:
-                analyses.append(analysis)
-                self.analyzed_sites.append(url)
-            
-            time.sleep(2)
-
+        except Exception as e:
+            print(f"\n!! Error: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        finally:
+            if self.driver:
+                self.driver.quit()
 
 
 if __name__ == "__main__":
