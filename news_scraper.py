@@ -440,20 +440,20 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
-    page_flip = 0
+    site_flip = 0
     page_no = 1
 
     while True:
         if page_no == 1:
-            site = config.DEFAULT_WEBSITES[page_flip]
+            site = config.DEFAULT_WEBSITES[site_flip]
         else:
-            site = config.WEBSITES[page_flip].replace("| PAGENO |", str(page_no))
+            site = config.WEBSITES[site_flip].replace("| PAGENO |", str(page_no))
 
         log("info", site)
         browser(site)
 
         if update_site:
-            page_flip = 1 - page_flip
+            site_flip = 1 - site_flip
             update_site = False
             page_no = 1
         else:
