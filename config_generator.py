@@ -195,7 +195,7 @@ class ConfigGenerator:
 
         candidates = []
         UI_EXCLUDE_PATTERNS = [
-            'gsc-', 'datepicker', 'stickymenu', 'header', 'search', 'menu', 'banner', 'slick', 'widget'
+            'gsc-', 'datepicker', 'stickymenu', 'header', 'search', 'menu', 'banner', 'slick', 'widget', 'left', 'right'
         ]
 
         for tag in soup.find_all(['div', 'section', 'main', 'article']):
@@ -233,6 +233,8 @@ class ConfigGenerator:
 
         if candidates:
             candidates.sort(key=lambda x: x['score'], reverse=True)
+            for c in candidates:
+                print(f"{c['selector']}: {c['score']}")
             best = candidates[0]
             print(f"{self.process_indent}Found main container: {best['selector']} (score: {best['score']})")
             return best
@@ -451,6 +453,7 @@ class ConfigGenerator:
                 url1 = page_numbers[0][1]
                 url2 = page_numbers[1][1]
                 
+                print(url, '\n', url1, '\n', url2, '\n')
                 pattern = self.extract_pagination_pattern(url, url1, url2)
                 if pattern:
                     print(f"{self.process_indent}'pattern': {pattern}, 'max_detected': {max(p[0] for p in page_numbers)}")
@@ -466,6 +469,9 @@ class ConfigGenerator:
             url1 = urljoin(base_url, url1)
             url2 = urljoin(base_url, url2)
             
+            if url1 == url2:
+                return None
+
             for i, (c1, c2) in enumerate(zip(url1, url2)):
                 if c1 != c2:
                     for j in range(i, min(len(url1), len(url2))):
@@ -700,10 +706,8 @@ class ConfigGenerator:
                 websites.append(url)
                 print(f"{self.process_indent}Added: {url}")
             
-            # Setup browser
             self.setup_browser()
                 
-            # Analyze each website
             analyses = []
             for i, url in enumerate(websites, 1):
                 print(f"\n{'='*20} ANALYSIS {i}/{len(websites)} {'='*20}")
@@ -714,7 +718,6 @@ class ConfigGenerator:
                 
                 time.sleep(0)
                 
-                # Create adaptive config
                 if analyses:
                     self.create_adaptive_config(analyses)
                     
