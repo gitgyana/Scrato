@@ -245,7 +245,7 @@ def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
         log("info", f"CSV filename: {csv_file}")
 
     try:
-        fieldnames = data.keys()
+        fieldnames = list(data.keys())
 
         if not os.path.isfile(csv_file):
             with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
