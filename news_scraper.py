@@ -87,7 +87,7 @@ log(
 )
 
 
-def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool, str:
+def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> tuple:
     """
     Perform insert operation on a dictionary data onto a table of a particular database.
 
@@ -111,15 +111,14 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
                         ```
 
     Returns:
-        bool: True for successful operation. Otherwise False.
-        str : Operation message
+        tuple (bool, str): True for successful operation, otherwise False, with operation message.
     """
 
     dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not data:
         log("warning", "Missing data dictionary")
-        return False, "Data <dict> is empty"
+        return (False, "Data <dict> is empty")
 
     if not db_name:
         db_name = dt_now + ".db"
@@ -150,7 +149,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         log("error", "Unsuccessful table creation")
         conn.commit()
         conn.close()
-        return False, f"Unable to create table: {table_name}; header: {table_header}"
+        return (False, f"Unable to create table: {table_name}; header: {table_header}")
     
     pk_attr = [
         data[1]
@@ -186,7 +185,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         if not op_success:
             conn.commit()
             conn.close()
-            return op_success, op_message
+            return (op_success, op_message)
 
     header_fields = ', '.join(str(field) for field in data.keys())
     field_placeholder = ', '.join('?' * len(data))
@@ -214,10 +213,10 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
 
     conn.commit()
     conn.close()
-    return op_success, op_message
+    return (op_success, op_message)
 
 
-def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
+def csv_op(data: dict = None, csv_file: str = None) -> tuple:
     """
     Create a csv file based on the data <dict>. data.keys will be the column tiles.
 
@@ -228,14 +227,13 @@ def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
                     CSV file name or path. If file not found, then it is created.
 
     Returns:
-        bool: True for successful operation. Otherwise False.
-        str : Operation message
+        tuple (bool, str): True for successful operation, otherwise False, with operation message.
     """
     dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not data:
         log("warning", "Missing data dictionary")
-        return False, "Data <dict> is empty"
+        return (False, "Data <dict> is empty")
 
     if not csv_file:
         csv_file = dt_now + ".csv"
@@ -257,9 +255,9 @@ def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
 
     except Exception as e:
         log("error", f"Unsuccessful csv operation: {str(e)}")
-        return False, "Unsuccessful"
+        return (False, "Unsuccessful")
 
-    return True, "Successful"
+    return (True, "Successful")
 
 
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
