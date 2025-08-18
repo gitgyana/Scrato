@@ -115,8 +115,6 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         str : Operation message
     """
 
-    global existing_records
-    
     dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     if not data:
@@ -179,7 +177,6 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
             
                 if cursor.fetchone():
                     log("info", "Key values exists. Skipping DB insert.")
-                    existing_records += 1
                     op_success, op_message = False, "Key values exists. Skipping DB insert."
 
             except Exception:
@@ -243,6 +240,8 @@ def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
     if not csv_file:
         csv_file = dt_now + ".csv"
         log("info", f"CSV filename: {csv_file}")
+
+    os.makedirs(os.path.dirname(csv_file), exist_ok=True)
 
     try:
         fieldnames = list(data.keys())
@@ -457,19 +456,26 @@ def browser(site=None):
             except Exception as e1:
                 log("error", f"Unknown error in row hardcode")
 
-        database_op(
+        db_status, db_msg = database_op(
             data = row, 
             db_name = config.DATABASE, 
             table_name = config.TABLE_NAME, 
             table_header = config.TABLE_HEADER,
         )
         
-        csv_op(
+        if not db_status and "Key values exists" in db_msg:
+            existing_records += 1
+
+        row['db_status']: db_status
+        row['db_msg']: db_msg
+        
+        csv_status, _ = csv_op(
             data = row, 
             csv_file = config.CSV_FILE,
         )
 
-        successful_records += 1
+        if csv_status:
+            successful_records += 1
 
     detail_driver.quit()
     if successful_records == 0:
