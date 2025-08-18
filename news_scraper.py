@@ -254,7 +254,7 @@ def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
 
         with open(csv_file, 'a', newline='', encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writerow(row)
+            writer.writerow(data)
 
     except Exception as e:
         log("error", f"Unsuccessful csv operation: {str(e)}")
