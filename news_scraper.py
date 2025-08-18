@@ -220,6 +220,49 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
     return op_success, op_message
 
 
+def csv_op(data: dict = None, csv_file: str = None) -> bool, str:
+    """
+    Create a csv file based on the data <dict>. data.keys will be the column tiles.
+
+    Parameters:
+        data (dict, required): 
+                    Dictionary of data in `column: value` pairs to be inserted.
+        csv_file (str, default: `YYYY.MM.DD_HH.MM.SS.csv`): 
+                    CSV file name or path. If file not found, then it is created.
+
+    Returns:
+        bool: True for successful operation. Otherwise False.
+        str : Operation message
+    """
+    dt_now = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    if not data:
+        log("warning", "Missing data dictionary")
+        return False, "Data <dict> is empty"
+
+    if not csv_file:
+        csv_file = dt_now + ".csv"
+        log("info", f"CSV filename: {csv_file}")
+
+    try:
+        fieldnames = data.keys()
+
+        if not os.path.isfile(csv_file):
+            with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+
+        with open(csv_file, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writerow(row)
+
+    except Exception as e:
+        log("error", f"Unsuccessful csv operation: {str(e)}")
+        return False, "Unsuccessful"
+
+    return True, "Successful"
+
+
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
     """
     Create and configure a Chrome WebDriver instance.
