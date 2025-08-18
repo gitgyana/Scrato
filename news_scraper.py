@@ -209,6 +209,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         else:
             success_msg += f"{[val[:10] for val in data.values()]}"
 
+        op_message = success_msg
         log("info", success_msg)
 
     conn.commit()
@@ -421,6 +422,7 @@ def browser(site=None):
                     size = parts[1].strip()
         
         process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        
         if not filename or filename == '':
             filename = f"FILE_{process_dt.replace('.', '')}"
 
@@ -463,9 +465,9 @@ def browser(site=None):
         
         if not db_status and "Key values exists" in db_msg:
             existing_records += 1
-
-        row['db_status']: db_status
-        row['db_msg']: db_msg
+        
+        row['db_status'] = db_status
+        row['db_msg'] = db_msg
         
         csv_status, _ = csv_op(
             data = row, 
