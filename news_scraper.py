@@ -480,7 +480,7 @@ def browser(site=None):
     if successful_records == 0:
         log("warning", "ZERO SUCCESSFUL RECORDS FOUND")
     else:
-        log("info", f"Scraping completed. Data saved to {output_file}")
+        log("info", f"Scraping completed. Data saved to {config.CSV_FILE}")
         successful_records = 0
 
 
