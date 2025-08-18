@@ -387,6 +387,10 @@ def browser(site=None):
                     filename = parts[0].strip()
                     size = parts[1].strip()
         
+        process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+        if not filename or filename == '':
+            filename = f"FILE_{process_dt.replace('.', '')}"
+
         fileurl_dict = {}
         for p in config.FILE_PROVIDERS:
             file_list = []
