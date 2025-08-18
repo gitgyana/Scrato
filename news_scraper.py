@@ -348,9 +348,6 @@ def browser(site=None):
     if not formatted_dt:
         formatted_dt = now.strftime("%Y.%m.%d_%H.%M.%S")
 
-    os.makedirs(os.path.join("Outputs", formatted_ym), exist_ok=True)
-    output_file = config.CSV_FILE
-    
     if not site:
         site = input("Enter site URL to scrape: ").strip()
 
@@ -377,11 +374,6 @@ def browser(site=None):
     if not news_section:
         log("warning", "Can't find news list section.")
         return
-
-    if not os.path.isfile(output_file):
-        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
-            writer.writeheader()
 
     detail_driver = create_driver(chromedriver_path, driver_config)
     
@@ -472,10 +464,10 @@ def browser(site=None):
             table_header = config.TABLE_HEADER,
         )
         
-        with open(output_file, 'a', newline='', encoding='utf-8') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=config.FIELDNAMES)
-            
-            writer.writerow(row)
+        csv_op(
+            data = row, 
+            csv_file = config.CSV_FILE,
+        )
 
         successful_records += 1
 
