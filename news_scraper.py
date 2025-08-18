@@ -87,7 +87,7 @@ log(
 )
 
 
-def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool:
+def database_op(data: dict = None, db_name: str = None, table_name: str = None, table_header: list = None) -> bool, str:
     """
     Perform insert operation on a dictionary data onto a table of a particular database.
 
@@ -112,6 +112,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
 
     Returns:
         bool: True for successful operation. Otherwise False.
+        str : Operation message
     """
 
     global existing_records
@@ -120,7 +121,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
 
     if not data:
         log("warning", "Missing data dictionary")
-        return False
+        return False, "Data <dict> is empty"
 
     if not db_name:
         db_name = dt_now + ".db"
@@ -148,10 +149,10 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
             """
         )
     except Exception:
-        log("error", "DB connect / TABLE creation")
+        log("error", "Unsuccessful table creation")
         conn.commit()
         conn.close()
-        return False
+        return False, f"Unable to create table: {table_name}; header: {table_header}"
     
     pk_attr = [
         data[1]
@@ -159,14 +160,14 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
         if data[-1] != 0
     ]
 
-    op_success = True
+    op_success, op_message = True, "Operation on [Primary key]"
 
     if pk_attr:
         pk_values = [data[key] for key in pk_attr]
         
         if not pk_values:
-            log("warning", "Missing primary keys value.")
-            op_success = False
+            log("warning", "Missing primary keys value")
+            op_success, op_message = False, "Missing primary keys value"
         else:
             try:
                 pk_placeholder = " AND ".join(f"{key} = ?" for key in pk_attr)
@@ -179,16 +180,16 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
                 if cursor.fetchone():
                     log("info", "Key values exists. Skipping DB insert.")
                     existing_records += 1
-                    op_success = False
+                    op_success, op_message = False, "Key values exists. Skipping DB insert."
 
             except Exception:
-                log("error", "Checking Primary Key")
-                op_success = False
+                log("error", "Unsuccessful [Primary key] checking")
+                op_success, op_message = False, "Unsuccessful [Primary key] checking"
 
         if not op_success:
             conn.commit()
             conn.close()
-            return op_success
+            return op_success, op_message
 
     header_fields = ', '.join(str(field) for field in data.keys())
     field_placeholder = ', '.join('?' * len(data))
@@ -203,8 +204,8 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
             values
         )
     except Exception:
-        log("error", "DB Insert Operation")
-        op_success = False
+        log("error", "Unsuccessful insert operation")
+        op_success, op_message = False, "Unsuccessful insert operation"
     else:
         success_msg = f"Completed: "
         if pk_attr:
@@ -216,7 +217,7 @@ def database_op(data: dict = None, db_name: str = None, table_name: str = None, 
 
     conn.commit()
     conn.close()
-    return op_success
+    return op_success, op_message
 
 
 def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
