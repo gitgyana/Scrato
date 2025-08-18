@@ -435,8 +435,7 @@ def browser(site=None):
             fileurl_dict[p] = file_list
 
         fileurl = "; ".join(f"{k}: {v}" for k, v in fileurl_dict.items())
-        process_dt = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
-    
+        
         try:
             row = {field: locals()[field] for field in config.FIELDNAMES}
         except Exception as e:
