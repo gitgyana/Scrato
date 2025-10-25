@@ -35,14 +35,16 @@ def ask_headless(timeout=10):
     """
     result = {"headless": True}
 
-    def get_input():
-        val = input("Would you like to run in headless mode? (y/N, default y): ").strip().lower()
-        result["headless"] = val in ["y", '']
+    if "linux" not in os_arch:
+        def get_input():
+            val = input("Would you like to run in headless mode? (y/N, default y): ").strip().lower()
+            result["headless"] = val in ["y", '']
 
-    thread = threading.Thread(target=get_input)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
+        thread = threading.Thread(target=get_input)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout)
+
     return result["headless"]
 
 
@@ -52,13 +54,15 @@ def ask_disable_js(timeout=10):
     """
     result = {"disable_js": True}
 
-    def get_input():
-        val = input("Disable JavaScript? (y/N, default y): ").strip().lower()
-        result["disable_js"] = val in ['y', '']
+    if "linux" not in os_arch:
+        def get_input():
+            val = input("Disable JavaScript? (y/N, default y): ").strip().lower()
+            result["disable_js"] = val in ['y', '']
 
-    thread = threading.Thread(target=get_input, daemon=True)
-    thread.start()
-    thread.join(timeout)
+        thread = threading.Thread(target=get_input, daemon=True)
+        thread.start()
+        thread.join(timeout)
+
     return result["disable_js"]
 
 
