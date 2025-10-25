@@ -261,7 +261,7 @@ def csv_op(data: dict = None, csv_file: str = None) -> tuple:
     return (True, "Successful")
 
 
-def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
+def create_driver(chromedriver_path: str, driver_config, disable_images=True) -> webdriver.Chrome:
     """
     Create and configure a Chrome WebDriver instance.
 
@@ -297,6 +297,9 @@ def create_driver(chromedriver_path: str, driver_config) -> webdriver.Chrome:
 
     if driver_config.disable_js:
         prefs["profile.managed_default_content_settings.javascript"] = 2
+
+    if disable_images:
+        prefs["profile.managed_default_content_settings.images"] = 2
 
     if prefs:
         options.add_experimental_option("prefs", prefs)
