@@ -1,9 +1,4 @@
 #!/bin/bash
-source /home/debian/Projects/Scrato/ScratoEnv/bin/activate
-python /home/debian/Projects/Scrato/news_scraper.py
-
-
-#!/bin/bash
 
 LOG_DIR="/home/debian/Projects/Scrato/logs"
 LOG_FILE="$LOG_DIR/start_scrato.log"
