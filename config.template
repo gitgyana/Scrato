@@ -82,7 +82,7 @@ formatted_ym = datetime.now().strftime("%Y.%m")
 CSV_FILE = os.path.join("Outputs", formatted_ym, f"news_output_{OUTPUT_DATETIME}.csv")
 
 # Directory for logs
-LOG_DIR = "Logs"
+LOG_DIR = "logs"
 
 # Data row template (used for inserting into DB or CSV)
 ROW_HARDCODE = """
