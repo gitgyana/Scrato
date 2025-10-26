@@ -10,3 +10,6 @@ chromedrivers/
 .db_archive/
 Logs
 Logs/
+*Env
+Env*
+*env
