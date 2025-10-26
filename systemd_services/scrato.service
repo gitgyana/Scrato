@@ -1,0 +1,18 @@
+[Unit]
+Description=Start Scrato Python Script in venv
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/debian/Projects/Scrato/start_scrato.sh
+WorkingDirectory=/home/debian/Projects/Scrato
+Environment="VIRTUAL_ENV=/home/debian/Projects/Scrato/ScratoEnv"
+Environment="PATH=/home/debian/Projects/Scrato/ScratoEnv/bin:$PATH"
+User=debian
+TimeoutSec=60
+StandardOutput=journal
+StandardError=journal
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
