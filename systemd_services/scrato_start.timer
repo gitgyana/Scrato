@@ -10,7 +10,7 @@ OnCalendar=*-*-* 14:00:00
 OnCalendar=*-*-* 17:00:00
 OnCalendar=*-*-* 20:00:00
 OnCalendar=*-*-* 23:00:00
-Unit=viper_scraper.service
+Unit=scrato.service
 
 [Install]
 WantedBy=timers.target
