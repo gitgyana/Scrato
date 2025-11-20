@@ -1,5 +1,6 @@
 # config.py
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import os
 
 # CSS classes and element identifiers for scraping
@@ -42,7 +43,9 @@ OUTPUT_DATETIME = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
 REFINE_DT = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Scraping/processing filter: stop after this end date
-END_DATE = "2025.08"
+now = datetime.now()
+two_months_ago = now - relativedelta(months=1)
+END_DATE = two_months_ago.strftime("%Y.%m")
 
 # SQLite database configuration
 DATABASE = 'database.db'
