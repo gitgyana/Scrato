@@ -488,22 +488,21 @@ def browser(site=None):
 
 
 if __name__ == "__main__":
-    site_flip = 0
-    page_no = 1
+    for site_flip in [0, 1]:
+        page_no = 1
 
-    while True:
-        if page_no == 1:
-            site = config.DEFAULT_WEBSITES[site_flip]
-        else:
-            site = config.WEBSITES[site_flip].replace("| PAGENO |", str(page_no))
+        while True:
+            if page_no == 1:
+                site = config.DEFAULT_WEBSITES[site_flip]
+            else:
+                site = config.WEBSITES[site_flip].replace("| PAGENO |", str(page_no))
 
-        log("info", site)
-        browser(site)
+            log("info", site)
+            browser(site)
 
-        if update_site:
-            site_flip = 1 - site_flip
-            update_site = False
-            page_no = 1
-        else:
-            page_no += 1
+            if update_site:
+                update_site = False
+                break
+            else:
+                page_no += 1
 
