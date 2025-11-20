@@ -15,4 +15,5 @@ StandardError=journal
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+# Uncomment the "WantedBy" directive, to make the service start on boot
+# WantedBy=multi-user.target
