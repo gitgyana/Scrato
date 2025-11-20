@@ -1,0 +1,16 @@
+[Unit]
+Description=Start Scrato Service in scheduled manner
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+OnCalendar=*-*-* 05:00:00
+OnCalendar=*-*-* 08:00:00
+OnCalendar=*-*-* 11:00:00
+OnCalendar=*-*-* 14:00:00
+OnCalendar=*-*-* 17:00:00
+OnCalendar=*-*-* 20:00:00
+OnCalendar=*-*-* 23:00:00
+Unit=viper_scraper.service
+
+[Install]
+WantedBy=timers.target
